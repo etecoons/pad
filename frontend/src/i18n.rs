@@ -1,5 +1,14 @@
 use yew::prelude::*;
 
+mod de;
+mod en;
+mod es;
+mod fr;
+mod ja;
+mod pt;
+mod ru;
+mod zh;
+
 #[derive(Clone, PartialEq)]
 pub struct LocaleContext {
     pub current: String,
@@ -17,45 +26,24 @@ pub fn detect_browser_locale() -> String {
         let navigator = window.navigator();
         if let Some(lang) = navigator.language() {
             let l = lang.to_lowercase();
-            if l.starts_with("zh") {
-                return "zh".to_string();
-            }
-            if l.starts_with("es") {
-                return "es".to_string();
-            }
-            if l.starts_with("de") {
-                return "de".to_string();
-            }
-            if l.starts_with("ja") {
-                return "ja".to_string();
-            }
-            if l.starts_with("fr") {
-                return "fr".to_string();
-            }
-            if l.starts_with("pt") {
-                return "pt".to_string();
-            }
-            if l.starts_with("ru") {
-                return "ru".to_string();
-            }
+            if l.starts_with("zh") { return "zh".to_string(); }
+            if l.starts_with("es") { return "es".to_string(); }
+            if l.starts_with("de") { return "de".to_string(); }
+            if l.starts_with("ja") { return "ja".to_string(); }
+            if l.starts_with("fr") { return "fr".to_string(); }
+            if l.starts_with("pt") { return "pt".to_string(); }
+            if l.starts_with("ru") { return "ru".to_string(); }
         }
     }
     "en".to_string()
 }
 
 pub fn get_saved_locale() -> String {
-    web_sys::window()
-        .and_then(|w| w.local_storage().ok().flatten())
-        .and_then(|s| s.get_item("rustpad_locale").ok().flatten())
-        .unwrap_or_else(detect_browser_locale)
+    crate::storage::StorageService::get_item("lang", &detect_browser_locale())
 }
 
 pub fn set_saved_locale(locale: &str) {
-    if let Some(w) = web_sys::window() {
-        if let Some(s) = w.local_storage().ok().flatten() {
-            let _ = s.set_item("rustpad_locale", locale);
-        }
-    }
+    crate::storage::StorageService::set_item("lang", locale);
 }
 
 pub fn translate(lang: &str, key: &str) -> String {
@@ -77,18 +65,16 @@ pub fn translate(lang: &str, key: &str) -> String {
         "en"
     };
 
-    if let Some(val) = crate::i18n_en_es::translate_en_es(l, key) {
-        return val.to_string();
-    }
-    if let Some(val) = crate::i18n_de_fr::translate_de_fr(l, key) {
-        return val.to_string();
-    }
-    if let Some(val) = crate::i18n_ja_zh::translate_ja_zh(l, key) {
-        return val.to_string();
-    }
-    if let Some(val) = crate::i18n_pt_ru::translate_pt_ru(l, key) {
-        return val.to_string();
-    }
+    let val = match l {
+        "zh" => zh::translate(key),
+        "es" => es::translate(key),
+        "de" => de::translate(key),
+        "ja" => ja::translate(key),
+        "fr" => fr::translate(key),
+        "pt" => pt::translate(key),
+        "ru" => ru::translate(key),
+        _ => en::translate(key),
+    };
 
-    key.to_string()
+    val.unwrap_or(key).to_string()
 }

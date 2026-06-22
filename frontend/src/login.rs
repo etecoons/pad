@@ -1,4 +1,4 @@
-use crate::services::{ApiService, StorageService};
+use crate::services::ApiService;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 
@@ -13,13 +13,12 @@ pub fn login(props: &LoginProps) -> Html {
     let error_msg = use_state(|| "".to_string());
     let is_locked = use_state(|| false);
     let pin_length = use_state(|| 4);
-    let theme = use_state(StorageService::get_theme);
     let input_ref = use_node_ref();
     let locale = use_context::<crate::i18n::LocaleContext>().unwrap();
 
     {
         let input_ref = input_ref.clone();
-        use_effect_with((*is_locked).clone(), move |locked| {
+        use_effect_with(*is_locked, move |locked| {
             if !*locked {
                 if let Some(input) = input_ref.cast::<web_sys::HtmlInputElement>() {
                     let _ = input.focus();
@@ -47,26 +46,6 @@ pub fn login(props: &LoginProps) -> Html {
             || ()
         });
     }
-
-    let toggle_theme = {
-        let theme = theme.clone();
-        Callback::from(move |_| {
-            let next = match theme.as_str() {
-                "light" => "dark",
-                "dark" => "nord",
-                "nord" => "dracula",
-                "dracula" => "sepia",
-                _ => "light",
-            };
-            StorageService::set_theme(next);
-            if let Some(doc) = web_sys::window().and_then(|w| w.document()) {
-                if let Some(root) = doc.document_element() {
-                    let _ = root.set_attribute("data-theme", next);
-                }
-            }
-            theme.set(next.to_string());
-        })
-    };
 
     let on_input = {
         let pin_input = pin_input.clone();
@@ -146,33 +125,11 @@ pub fn login(props: &LoginProps) -> Html {
         })
     };
 
-    let theme_toggle_icon = match theme.as_str() {
-        "dark" => html! {
-            <svg id="moon-icon" class="moon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>
-        },
-        "nord" => html! {
-            <svg id="droplet-icon" class="droplet" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/></svg>
-        },
-        "dracula" => html! {
-            <svg id="sparkles-icon" class="sparkles" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"/></svg>
-        },
-        "sepia" => html! {
-            <svg id="coffee-icon" class="coffee" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
-        },
-        _ => html! {
-            <svg id="sun-icon" class="sun" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="M4.93 4.93l1.41 1.41" /><path d="M17.66 17.66l1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="M6.34 17.66l-1.41 1.41" /><path d="M19.07 4.93l-1.41 1.41" /></svg>
-        },
-    };
-
     html! {
         <div class="login-container">
-            <button id="theme-toggle" class="theme-toggle" onclick={toggle_theme} aria-label="Toggle dark mode">
-                {theme_toggle_icon}
-            </button>
-            <div id="login-content">
+            <div class="login-box">
                 <div class="pin-header">
-                    <h1 id="site-title">{"RustPad"}</h1>
-                    <h2 id="pin-description" style="font-size: 0.95rem; line-height: 1.4;">
+                    <h2 id="pin-description">
                         {if *is_locked { locale.t("login_locked") } else { locale.t("login_prompt") }}
                     </h2>
                 </div>
@@ -191,9 +148,13 @@ pub fn login(props: &LoginProps) -> Html {
                         />
                     </div>
                 </form>
-                <p id="pin-error" class="error-message">
-                    {(*error_msg).clone()}
-                </p>
+                <div class="pin-status">
+                    if !(*error_msg).is_empty() {
+                        <p id="pin-error" class="pin-error" style="display: block;">
+                            {(*error_msg).clone()}
+                        </p>
+                    }
+                </div>
             </div>
         </div>
     }

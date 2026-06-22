@@ -1,48 +1,33 @@
+#![allow(dead_code)]
 use crate::types::{Notepad, SearchItem, Settings};
 use gloo_net::http::Request;
 use serde::{Deserialize, Serialize};
 
+use crate::storage::StorageService as GenericStorage;
+
 pub struct StorageService;
 
 impl StorageService {
-    fn local_storage() -> Option<web_sys::Storage> {
-        web_sys::window()?.local_storage().ok().flatten()
-    }
-
     pub fn get_theme() -> String {
-        Self::local_storage()
-            .and_then(|s| {
-                s.get_item("rustpad_theme")
-                    .ok()
-                    .flatten()
-                    .or_else(|| s.get_item("dumbpad_theme").ok().flatten())
-            })
-            .unwrap_or_else(|| "dark".to_string())
+        GenericStorage::get_item("theme", "dark")
     }
 
     pub fn set_theme(theme: &str) {
-        if let Some(s) = Self::local_storage() {
-            let _ = s.set_item("rustpad_theme", theme);
-        }
+        GenericStorage::set_item("theme", theme);
     }
 
     pub fn get_settings() -> Settings {
-        Self::local_storage()
-            .and_then(|s| {
-                s.get_item("rustpad_settings")
-                    .ok()
-                    .flatten()
-                    .or_else(|| s.get_item("dumbpad_settings").ok().flatten())
-            })
-            .and_then(|val| serde_json::from_str(&val).ok())
-            .unwrap_or_default()
+        let val = GenericStorage::get_item("rustpad_settings", "");
+        if !val.is_empty() {
+            serde_json::from_str(&val).unwrap_or_default()
+        } else {
+            Settings::default()
+        }
     }
 
     pub fn set_settings(settings: &Settings) {
-        if let Some(s) = Self::local_storage() {
-            if let Ok(serialized) = serde_json::to_string(settings) {
-                let _ = s.set_item("rustpad_settings", &serialized);
-            }
+        if let Ok(serialized) = serde_json::to_string(settings) {
+            GenericStorage::set_item("rustpad_settings", &serialized);
         }
     }
 }
@@ -92,6 +77,7 @@ pub struct VerifyPinResponse {
 #[serde(rename_all = "camelCase")]
 pub struct ConfigResponse {
     pub version: String,
+    pub site_title: String,
 }
 
 #[derive(Deserialize)]

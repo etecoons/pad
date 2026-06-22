@@ -20,7 +20,7 @@ pub struct SearchResult {
     pub r#match: String,
 }
 
-fn fuzzy_match_subsequence(text: &str, query: &str) -> Option<i64> {
+pub(crate) fn fuzzy_match_subsequence(text: &str, query: &str) -> Option<i64> {
     if query.is_empty() {
         return Some(0);
     }

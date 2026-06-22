@@ -18,7 +18,8 @@ COPY Cargo.toml Cargo.lock ./
 COPY frontend/Cargo.toml ./frontend/
 
 # Cache backend dependencies by building a dummy binary
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN mkdir -p backend/src && echo "fn main() {}" > backend/src/main.rs
+COPY backend/Cargo.toml ./backend/
 RUN cargo build --release
 RUN rm -f target/release/deps/rustpad*
 
@@ -27,7 +28,7 @@ RUN mkdir -p frontend/src && echo "fn main() {}" > frontend/src/main.rs
 RUN cd frontend && trunk build --release
 
 # Copy actual source code and compile
-COPY src ./src
+COPY backend/src ./backend/src
 COPY frontend/src ./frontend/src
 COPY frontend/index.html ./frontend/
 COPY frontend/service-worker.js ./frontend/
@@ -42,10 +43,6 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Create a non-root user matching UID 1000
-RUN addgroup -g 1000 rustpad && \
-    adduser -u 1000 -G rustpad -s /bin/sh -D rustpad
-
 # Copy compiled Rust binary
 COPY --from=rust-builder /app/target/release/rustpad /app/rustpad
 
@@ -54,13 +51,13 @@ COPY --from=rust-builder /app/frontend/dist /app/frontend/dist
 
 # Setup data and asset directories with correct ownership
 RUN mkdir -p /app/data /app/frontend/dist/Assets && \
-    chown -R rustpad:rustpad /app
+    chown -R nobody:nobody /app
 
-USER rustpad
+USER nobody
 
 # Mount data volume
 VOLUME /app/data
 
-EXPOSE 3000
+EXPOSE 4402
 
 CMD ["/app/rustpad"]

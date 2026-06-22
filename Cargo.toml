@@ -1,31 +1,9 @@
-[package]
-name = "rustpad"
-version = "1.0.6"
-edition = "2021"
-
-[dependencies]
-axum = { version = "0.7", features = ["ws", "macros"] }
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tower-http = { version = "0.5", features = ["fs", "cors", "trace"] }
-dotenvy = "0.15"
-cookie = "0.18"
-axum-extra = { version = "0.9", features = ["cookie"] }
-futures-util = "0.3"
-notify = "6.1"
-regex = "1.10"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-ipnet = "2.9"
-percent-encoding = "2.3"
-sha2 = "0.10"
-
 [workspace]
 members = [
-    ".",
+    "backend",
     "frontend"
 ]
+resolver = "2"
 
 [profile.release]
 opt-level = "z"

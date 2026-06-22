@@ -120,7 +120,7 @@ Run `docker compose up -d` to launch the services.
 ## File Tree
 
 ```
-dumbpad/
+rustpad/
 ├── Cargo.toml          # Workspace root manifest
 ├── Dockerfile          # Multi-stage optimized Docker builder
 ├── .github/            # GitHub Actions integration

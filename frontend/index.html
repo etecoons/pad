@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RustPad - Simple Notes</title>
+    <title>RustPad</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Tell Trunk to copy the Assets folder directly into the dist output -->
     <link data-trunk rel="copy-dir" href="Assets"/>
@@ -14,16 +16,19 @@
     <link rel="icon" type="image/svg+xml" href="Assets/rustpad.svg">
     <link rel="alternate icon" type="image/png" href="Assets/rustpad.png">
     <link rel="apple-touch-icon" href="Assets/rustpad.png">
-    <link rel="stylesheet" href="Assets/styles.css">
-    <link rel="stylesheet" href="Assets/preview-styles.css">
+    <link data-trunk rel="css" href="Assets/base.css">
+    <link data-trunk rel="css" href="Assets/header.css">
+    <link data-trunk rel="css" href="Assets/login.css">
+    <link data-trunk rel="css" href="Assets/app.css">
+    <link data-trunk rel="css" href="Assets/preview-styles.css">
     <link rel="manifest" href="Assets/manifest.json">
     <script>
-        (function() { // Initialize theme immediately - Prevents theme flicker
-            let theme = JSON.parse(localStorage.getItem('rustpad_theme') || localStorage.getItem('dumbpad_theme')) 
-            if (!theme) {
-                theme = 'dark';
-            } 
-            localStorage.setItem('rustpad_theme', JSON.stringify(theme));
+        // Prevent theme flicker by setting theme immediately
+        (function() {
+            let theme = localStorage.getItem('theme') || 'dark';
+            if (theme.startsWith('"') && theme.endsWith('"')) {
+                theme = theme.slice(1, -1);
+            }
             document.documentElement.setAttribute('data-theme', theme);
         })();
     </script>

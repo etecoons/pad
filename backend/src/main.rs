@@ -18,6 +18,8 @@ mod search;
 mod state;
 mod utils;
 mod ws;
+#[cfg(test)]
+mod tests;
 
 use migration::migrate_all_notepads_to_name_based_files;
 use routes::*;
@@ -34,78 +36,35 @@ async fn main() {
 
     dotenvy::dotenv().ok();
 
-    let port = std::env::var("PORT")
-        .ok()
-        .and_then(|s| s.parse::<u16>().ok())
-        .unwrap_or(3000);
-    let site_title = std::env::var("SITE_TITLE").unwrap_or_else(|_| "RustPad".to_string());
-    let pin = std::env::var("RUSTPAD_PIN")
-        .or_else(|_| std::env::var("DUMBPAD_PIN"))
-        .ok()
-        .filter(|s| !s.is_empty());
+    let port = std::env::var("PORT").ok().and_then(|s| s.parse::<u16>().ok()).unwrap_or(4402);
+    let site_title = std::env::var("RUSTPAD_TITLE").or_else(|_| std::env::var("SITE_TITLE")).unwrap_or_else(|_| "RustPad".to_string());
+    let pin = std::env::var("RUSTPAD_PIN").ok().filter(|s| !s.is_empty())
+        .filter(|p| p.len() >= 4 && p.len() <= 10 && p.chars().all(|c| c.is_ascii_digit()));
 
-    // Validate PIN format
-    let pin =
-        pin.filter(|p| p.len() >= 4 && p.len() <= 10 && p.chars().all(|c| c.is_ascii_digit()));
+    let cookie_max_age_hours = std::env::var("COOKIE_MAX_AGE").ok().and_then(|s| s.parse::<i64>().ok()).unwrap_or(24);
+    let page_history_cookie_age_days = std::env::var("PAGE_HISTORY_COOKIE_AGE").ok().and_then(|s| s.parse::<i64>().ok()).unwrap_or(365);
+    let max_attempts = std::env::var("MAX_ATTEMPTS").ok().and_then(|s| s.parse::<usize>().ok()).unwrap_or(5);
+    let lockout_time_minutes = std::env::var("LOCKOUT_TIME").ok().and_then(|s| s.parse::<u64>().ok()).unwrap_or(15);
 
-    let cookie_max_age_hours = std::env::var("COOKIE_MAX_AGE")
-        .ok()
-        .and_then(|s| s.parse::<i64>().ok())
-        .unwrap_or(24);
-    let page_history_cookie_age_days = std::env::var("PAGE_HISTORY_COOKIE_AGE")
-        .ok()
-        .and_then(|s| s.parse::<i64>().ok())
-        .unwrap_or(365);
-    let max_attempts = std::env::var("MAX_ATTEMPTS")
-        .ok()
-        .and_then(|s| s.parse::<usize>().ok())
-        .unwrap_or(5);
-    let lockout_time_minutes = std::env::var("LOCKOUT_TIME")
-        .ok()
-        .and_then(|s| s.parse::<u64>().ok())
-        .unwrap_or(15);
-
-    let trust_proxy = std::env::var("TRUST_PROXY")
-        .map(|s| s == "true")
-        .unwrap_or(false);
+    let trust_proxy = std::env::var("TRUST_PROXY").map(|s| s == "true").unwrap_or(false);
     let trusted_proxy_ips_raw = std::env::var("TRUSTED_PROXY_IPS").unwrap_or_default();
     let mut trusted_proxies = parse_trusted_proxies(&trusted_proxy_ips_raw);
 
     if trust_proxy && trusted_proxy_ips_raw.trim().is_empty() {
         eprintln!("CRITICAL WARNING: TRUST_PROXY=true but TRUSTED_PROXY_IPS is not set or empty.");
-        eprintln!(
-            "Trust proxy is disabled for security. Set TRUSTED_PROXY_IPS to enable proxy trust."
-        );
+        eprintln!("Trust proxy is disabled for security. Set TRUSTED_PROXY_IPS to enable proxy trust.");
         trusted_proxies.clear();
     }
 
     let highlight_languages_raw = std::env::var("HIGHLIGHT_LANGUAGES").unwrap_or_default();
     let highlight_languages: Vec<String> = if highlight_languages_raw.trim().is_empty() {
-        vec![
-            "javascript",
-            "python",
-            "bash",
-            "css",
-            "html",
-            "rust",
-            "json",
-            "markdown",
-            "typescript",
-            "yaml",
-        ]
-        .iter()
-        .map(|&s| s.to_string())
-        .collect()
+        ["javascript", "python", "bash", "css", "html", "rust", "json", "markdown", "typescript", "yaml"]
+            .iter().map(|&s| s.to_string()).collect()
     } else {
-        highlight_languages_raw
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
-            .collect()
+        highlight_languages_raw.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect()
     };
 
-    let base_url =
-        std::env::var("BASE_URL").unwrap_or_else(|_| format!("http://localhost:{}", port));
+    let base_url = std::env::var("BASE_URL").unwrap_or_else(|_| format!("http://localhost:{}", port));
     let node_env = std::env::var("NODE_ENV").unwrap_or_else(|_| "development".to_string());
     let version = env!("CARGO_PKG_VERSION").to_string();
 

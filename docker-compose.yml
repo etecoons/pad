@@ -1,23 +1,24 @@
 services:
   rustpad:
     image: ghcr.io/ubermetroid/rustpad:latest
-    # build: .
+    build: .
     container_name: rustpad
     restart: unless-stopped
     ports:
-      - ${RUSTPAD_PORT:-3000}:3000
+      - ${RUSTPAD_PORT:-4402}:4402
     volumes:
       - ${RUSTPAD_DATA_PATH:-./data}:/app/data
     environment:
+      PORT: 4402
       # The title shown in the web interface
       SITE_TITLE: ${RUSTPAD_SITE_TITLE:-RustPad}
       # Optional PIN protection (leave empty to disable)
       RUSTPAD_PIN: ${RUSTPAD_PIN:-}
       # The base URL for the application
-      BASE_URL: ${RUSTPAD_BASE_URL:-http://localhost:3000} # Use ALLOWED_ORIGINS below to restrict cors to specific origins
+      BASE_URL: ${RUSTPAD_BASE_URL:-http://localhost:4402} # Use ALLOWED_ORIGINS below to restrict cors to specific origins
       # (OPTIONAL)
       # Usage: Comma-separated list of urls: http://localhost:port,http://internalip:port,https://base.proxy.tld,https://authprovider.domain.tld
-      # ALLOWED_ORIGINS: ${RUSTPAD_ALLOWED_ORIGINS:-http://localhost:3000} # Comment out to allow all origins (*)
+      # ALLOWED_ORIGINS: ${RUSTPAD_ALLOWED_ORIGINS:-http://localhost:4402} # Comment out to allow all origins (*)
       # LOCKOUT_TIME: ${RUSTPAD_LOCK_TIME:-15} # Customize pin lockout time (if empty, defaults to 15 in minutes)
       # MAX_ATTEMPTS: ${RUSTPAD_MAX_ATTEMPTS:-5} # Customize pin max attempts (if empty, defaults to 5)
       # COOKIE_MAX_AGE: ${RUSTPAD_COOKIE_MAX_AGE:-24} # Customize maximum age of cookies primarily used for pin verification (default 24) in hours
