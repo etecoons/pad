@@ -70,7 +70,7 @@ impl AppStateInner {
             let default_data = NotepadsJson {
                 notepads: vec![Notepad {
                     id: "default".to_string(),
-                    name: "Default Notepad".to_string(),
+                    name: "default".to_string(),
                 }],
             };
             let content = serde_json::to_string_pretty(&default_data)?;
@@ -83,7 +83,7 @@ impl AppStateInner {
                 let default_data = NotepadsJson {
                     notepads: vec![Notepad {
                         id: "default".to_string(),
-                        name: "Default Notepad".to_string(),
+                        name: "default".to_string(),
                     }],
                 };
                 let content = serde_json::to_string_pretty(&default_data)?;
