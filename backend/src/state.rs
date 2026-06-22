@@ -111,7 +111,7 @@ impl AppStateInner {
 
         while let Some(entry) = read_dir.next_entry().await? {
             let path = entry.path();
-            if path.is_file() && path.extension().map_or(false, |ext| ext == "txt") {
+            if path.is_file() && path.extension().is_some_and(|ext| ext == "txt") {
                 if let Some(name_str) = path.file_stem().and_then(|s| s.to_str()) {
                     txt_files.push(name_str.to_string());
                 }

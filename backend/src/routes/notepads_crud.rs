@@ -55,7 +55,10 @@ pub async fn create_notepad(jar: CookieJar, State(state): State<AppState>) -> im
     };
     data.notepads.push(new_notepad.clone());
 
-    if let Err(_) = fs::write(&state.notepads_file, serde_json::to_string(&data).unwrap()).await {
+    if fs::write(&state.notepads_file, serde_json::to_string(&data).unwrap())
+        .await
+        .is_err()
+    {
         return (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             axum::Json(serde_json::json!({ "error": "Error updating notepads list" })),
@@ -65,7 +68,7 @@ pub async fn create_notepad(jar: CookieJar, State(state): State<AppState>) -> im
 
     let sanitized = sanitize_filename(&unique_name);
     let file_path = state.data_dir.join(format!("{}.txt", sanitized));
-    if let Err(_) = fs::write(&file_path, "").await {
+    if fs::write(&file_path, "").await.is_err() {
         return (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             axum::Json(serde_json::json!({ "error": "Error creating notepad file" })),
@@ -190,7 +193,10 @@ pub async fn rename_notepad(
 
     data.notepads[idx].name = unique_name.clone();
 
-    if let Err(_) = fs::write(&state.notepads_file, serde_json::to_string(&data).unwrap()).await {
+    if fs::write(&state.notepads_file, serde_json::to_string(&data).unwrap())
+        .await
+        .is_err()
+    {
         return (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             axum::Json(serde_json::json!({ "error": "Error updating notepads list" })),

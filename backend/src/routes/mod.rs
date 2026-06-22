@@ -37,7 +37,7 @@ pub async fn search_api(
     let total_pages = if page_size == 0 {
         0
     } else {
-        (results.len() + page_size - 1) / page_size
+        results.len().div_ceil(page_size)
     };
     let paginated_results = if page_size == 0 {
         vec![]
@@ -115,9 +115,7 @@ fn get_files(dir: &StdPath, base_path: &str, files: &mut Vec<String>) -> std::io
             if file_name == ".DS_Store" || file_name == "Assets" {
                 continue;
             }
-            let sub_path = if base_path.is_empty() {
-                format!("/{}", file_name)
-            } else if base_path == "/" {
+            let sub_path = if base_path.is_empty() || base_path == "/" {
                 format!("/{}", file_name)
             } else {
                 format!("{}/{}", base_path, file_name)

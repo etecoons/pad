@@ -90,70 +90,73 @@ async fn ws_handler(socket: WebSocket, state: AppState) {
                 }
 
                 // Route message types
-                if msg_type == Some("operation") && notepad_id.is_some() {
-                    let nid = notepad_id.unwrap().to_string();
-                    if let Some(mut op) = data.get("operation").cloned() {
-                        let mut history_map = state.operations_history.write().await;
-                        let history = history_map.entry(nid.clone()).or_insert_with(Vec::new);
-                        let server_version = history.len();
+                if msg_type == Some("operation") {
+                    if let Some(nid) = notepad_id {
+                        let nid = nid.to_string();
+                        if let Some(mut op) = data.get("operation").cloned() {
+                            let mut history_map = state.operations_history.write().await;
+                            let history = history_map.entry(nid.clone()).or_insert_with(Vec::new);
+                            let server_version = history.len();
 
-                        if let Some(op_obj) = op.as_object_mut() {
-                            op_obj.insert(
-                                "serverVersion".to_string(),
-                                serde_json::json!(server_version),
-                            );
+                            if let Some(op_obj) = op.as_object_mut() {
+                                op_obj.insert(
+                                    "serverVersion".to_string(),
+                                    serde_json::json!(server_version),
+                                );
+                            }
+                            history.push(op.clone());
+
+                            // Drain history if exceeds 1000 items
+                            if history.len() > 1000 {
+                                history.drain(0..history.len() - 1000);
+                            }
+
+                            // Send ACK message to the client
+                            let op_id = op.get("id").and_then(|v| v.as_str()).unwrap_or("");
+                            let ack_msg = serde_json::json!({
+                                "type": "ack",
+                                "operationId": op_id,
+                                "serverVersion": server_version
+                            });
+                            let _ = tx.send(Message::Text(ack_msg.to_string()));
+
+                            // Broadcast operation to peer connections
+                            let clients_map = state.clients.read().await;
+                            let broadcast_msg = serde_json::json!({
+                                "type": "operation",
+                                "operation": op,
+                                "notepadId": nid,
+                                "userId": user_id.as_deref().unwrap_or("")
+                            });
+                            let msg = Message::Text(broadcast_msg.to_string());
+                            for (cid, client_tx) in clients_map.iter() {
+                                if Some(cid) != user_id.as_ref() {
+                                    let _ = client_tx.send(msg.clone());
+                                }
+                            }
                         }
-                        history.push(op.clone());
+                    }
+                } else if msg_type == Some("cursor") {
+                    if let Some(nid) = notepad_id {
+                        let color = data.get("color").and_then(|v| v.as_str()).unwrap_or("");
+                        let position = data
+                            .get("position")
+                            .cloned()
+                            .unwrap_or(serde_json::Value::Null);
 
-                        // Drain history if exceeds 1000 items
-                        if history.len() > 1000 {
-                            history.drain(0..history.len() - 1000);
-                        }
-
-                        // Send ACK message to the client
-                        let op_id = op.get("id").and_then(|v| v.as_str()).unwrap_or("");
-                        let ack_msg = serde_json::json!({
-                            "type": "ack",
-                            "operationId": op_id,
-                            "serverVersion": server_version
-                        });
-                        let _ = tx.send(Message::Text(ack_msg.to_string()));
-
-                        // Broadcast operation to peer connections
                         let clients_map = state.clients.read().await;
                         let broadcast_msg = serde_json::json!({
-                            "type": "operation",
-                            "operation": op,
-                            "notepadId": nid,
-                            "userId": user_id.as_ref().map(|s| s.as_str()).unwrap_or("")
+                            "type": "cursor",
+                            "userId": user_id.as_deref().unwrap_or(""),
+                            "color": color,
+                            "position": position,
+                            "notepadId": nid
                         });
                         let msg = Message::Text(broadcast_msg.to_string());
                         for (cid, client_tx) in clients_map.iter() {
                             if Some(cid) != user_id.as_ref() {
                                 let _ = client_tx.send(msg.clone());
                             }
-                        }
-                    }
-                } else if msg_type == Some("cursor") && notepad_id.is_some() {
-                    let nid = notepad_id.unwrap();
-                    let color = data.get("color").and_then(|v| v.as_str()).unwrap_or("");
-                    let position = data
-                        .get("position")
-                        .cloned()
-                        .unwrap_or(serde_json::Value::Null);
-
-                    let clients_map = state.clients.read().await;
-                    let broadcast_msg = serde_json::json!({
-                        "type": "cursor",
-                        "userId": user_id.as_ref().map(|s| s.as_str()).unwrap_or(""),
-                        "color": color,
-                        "position": position,
-                        "notepadId": nid
-                    });
-                    let msg = Message::Text(broadcast_msg.to_string());
-                    for (cid, client_tx) in clients_map.iter() {
-                        if Some(cid) != user_id.as_ref() {
-                            let _ = client_tx.send(msg.clone());
                         }
                     }
                 } else if msg_type == Some("notepad_rename") {

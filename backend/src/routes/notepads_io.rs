@@ -67,7 +67,7 @@ pub async fn save_notes(
         state.data_dir.join(format!("{}.txt", sanitized))
     };
 
-    if let Err(_) = fs::write(&note_path, &payload.content).await {
+    if fs::write(&note_path, &payload.content).await.is_err() {
         return (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
             axum::Json(serde_json::json!({ "error": "Error saving notes" })),
@@ -128,11 +128,12 @@ pub async fn delete_notepad(
 
     let deleted_notepad = data.notepads.remove(idx);
 
-    if let Err(_) = fs::write(
+    if fs::write(
         &state.notepads_file,
         serde_json::to_string_pretty(&data).unwrap(),
     )
     .await
+    .is_err()
     {
         return (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,

@@ -1,43 +1,76 @@
-name: Continuous Integration
+name: "Verify Code & Run Tests (CI)"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: "-D warnings"
 
 jobs:
-  check-format:
-    name: Code Formatting
+  fmt:
+    name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Stable Rust
-        run: rustup update stable && rustup component add rustfmt
-      - name: Check Formatting
-        run: cargo fmt --all --check
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  clippy-and-build:
-    name: Lint & Compile
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Check Formatting
+        run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Stable Rust & WASM Target
-        run: |
-          rustup update stable
-          rustup target add wasm32-unknown-unknown
-          rustup component add clippy
-      - name: Cache Cargo Dependencies
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+          targets: wasm32-unknown-unknown
+
+      - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
-      - name: Run Clippy
+
+      - name: Run Clippy (Deny Warnings)
         run: cargo clippy --workspace --all-targets -- -D warnings
+
+  build:
+    name: Build Backend & WASM Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install Trunk
+        uses: jetli/trunk-action@v0.5.0
+        with:
+          version: 'v0.21.14'
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build WASM Frontend
+        run: |
+          cd frontend
+          trunk build --release
+
       - name: Run Tests
-        run: cargo test --workspace
-      - name: Build WASM Frontend Target
-        run: cargo build --manifest-path frontend/Cargo.toml --target wasm32-unknown-unknown --release
-      - name: Build Backend Release Binary
-        run: cargo build --release
+        run: cargo test --workspace --exclude frontend
+
+      - name: Build Backend
+        run: cargo build --release --workspace --exclude frontend

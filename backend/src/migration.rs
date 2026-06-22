@@ -58,20 +58,18 @@ pub async fn migrate_all_notepads_to_name_based_files(notepads: &[Notepad], data
         let sanitized_name = sanitize_filename(&notepad.name);
         let new_path = data_dir.join(format!("{}.txt", sanitized_name));
 
-        if old_path != new_path {
-            if fs::metadata(&old_path).await.is_ok() {
-                if fs::metadata(&new_path).await.is_ok() {
-                    println!(
-                        "Skipping migration for {}: both {:?} and {:?} exist",
-                        notepad.name, old_path, new_path
-                    );
+        if old_path != new_path && fs::metadata(&old_path).await.is_ok() {
+            if fs::metadata(&new_path).await.is_ok() {
+                println!(
+                    "Skipping migration for {}: both {:?} and {:?} exist",
+                    notepad.name, old_path, new_path
+                );
+            } else {
+                if let Err(e) = fs::rename(&old_path, &new_path).await {
+                    eprintln!("Failed to migrate {:?} to {:?}: {}", old_path, new_path, e);
                 } else {
-                    if let Err(e) = fs::rename(&old_path, &new_path).await {
-                        eprintln!("Failed to migrate {:?} to {:?}: {}", old_path, new_path, e);
-                    } else {
-                        println!("Migrated: {:?} -> {:?}", old_path, new_path);
-                        migrated_count += 1;
-                    }
+                    println!("Migrated: {:?} -> {:?}", old_path, new_path);
+                    migrated_count += 1;
                 }
             }
         }

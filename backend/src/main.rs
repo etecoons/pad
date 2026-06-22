@@ -179,8 +179,7 @@ async fn main() {
                 let mut should_reindex = false;
                 for path in event.paths {
                     if let Some(ext) = path.extension() {
-                        if ext == "txt" || path.file_name().map_or(false, |f| f == "notepads.json")
-                        {
+                        if ext == "txt" || path.file_name().is_some_and(|f| f == "notepads.json") {
                             should_reindex = true;
                             break;
                         }

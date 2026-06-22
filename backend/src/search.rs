@@ -30,8 +30,7 @@ pub(crate) fn fuzzy_match_subsequence(text: &str, query: &str) -> Option<i64> {
 
     for q_char in query.chars() {
         let mut found = false;
-        let mut idx_in_text = last_match_idx;
-        while let Some(t_char) = text_chars.next() {
+        for (idx_in_text, t_char) in (last_match_idx..).zip(text_chars.by_ref()) {
             if t_char == q_char {
                 let distance = idx_in_text - last_match_idx;
                 score += 100 - (distance as i64 * 5).min(90);
@@ -39,7 +38,6 @@ pub(crate) fn fuzzy_match_subsequence(text: &str, query: &str) -> Option<i64> {
                 found = true;
                 break;
             }
-            idx_in_text += 1;
         }
         if !found {
             return None;
@@ -91,7 +89,7 @@ impl AppStateInner {
             }
         }
 
-        scored_results.sort_by(|a, b| b.1.cmp(&a.1));
+        scored_results.sort_by_key(|a| std::cmp::Reverse(a.1));
 
         scored_results
             .into_iter()

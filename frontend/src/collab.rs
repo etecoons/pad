@@ -16,13 +16,13 @@ pub fn use_collab_websocket(
     let ws_sender = use_mut_ref(|| None::<futures_channel::mpsc::UnboundedSender<String>>);
     let user_id = use_state(|| format!("user_{}", js_sys::Date::now() as i64));
     let user_color = use_state(|| {
-        let colors = vec![
+        let colors = [
             "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899",
         ];
         let idx = ((js_sys::Date::now() as i64) % colors.len() as i64) as usize;
         colors[idx].to_string()
     });
-    let offline_queue = use_mut_ref(|| Vec::<String>::new());
+    let offline_queue = use_mut_ref(Vec::<String>::new);
     let cancelled = use_mut_ref(|| false);
 
     let uid = (*user_id).clone();
@@ -78,14 +78,15 @@ pub fn use_collab_websocket(
                         .as_ref()
                         .map(|tx| tx.unbounded_send(init_msg));
 
-                    let mut queue = offline_queue_effect.borrow_mut();
-                    for msg in queue.drain(..) {
-                        let _ = ws_sender_effect
-                            .borrow()
-                            .as_ref()
-                            .map(|tx| tx.unbounded_send(msg));
+                    {
+                        let mut queue = offline_queue_effect.borrow_mut();
+                        for msg in queue.drain(..) {
+                            let _ = ws_sender_effect
+                                .borrow()
+                                .as_ref()
+                                .map(|tx| tx.unbounded_send(msg));
+                        }
                     }
-                    drop(queue);
 
                     spawn_local(async move {
                         while let Some(msg) = rx.next().await {
@@ -149,17 +150,15 @@ pub fn use_collab_websocket(
                                                 new_pos += text_val.len();
                                                 new_end += text_val.len();
                                             }
-                                        } else if op_type == "delete" {
-                                            if position < current_pos {
-                                                new_pos = std::cmp::max(
-                                                    position,
-                                                    current_pos.saturating_sub(text_val.len()),
-                                                );
-                                                new_end = std::cmp::max(
-                                                    position,
-                                                    current_end.saturating_sub(text_val.len()),
-                                                );
-                                            }
+                                        } else if op_type == "delete" && position < current_pos {
+                                            new_pos = std::cmp::max(
+                                                position,
+                                                current_pos.saturating_sub(text_val.len()),
+                                            );
+                                            new_end = std::cmp::max(
+                                                position,
+                                                current_end.saturating_sub(text_val.len()),
+                                            );
                                         }
                                         let _ = textarea
                                             .set_selection_range(new_pos as u32, new_end as u32);
