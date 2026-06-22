@@ -14,10 +14,12 @@ pub fn app() -> Html {
     let theme = use_state(StorageService::get_theme);
     let locale_state = use_state(crate::i18n::get_saved_locale);
     let active_notification = use_state(|| None::<(String, String)>);
+    let is_pin_required = use_state(|| true);
 
     {
         let version = app_version.clone();
         let site_title = site_title.clone();
+        let pin_req = is_pin_required.clone();
         use_effect_with((), move |_| {
             spawn_local(async move {
                 if let Ok(config) = ApiService::get_config().await {
@@ -28,6 +30,11 @@ pub fn app() -> Html {
                             doc.set_title(&config.site_title);
                         }
                     }
+                }
+            });
+            spawn_local(async move {
+                if let Ok(res) = ApiService::check_pin_required().await {
+                    pin_req.set(res.required);
                 }
             });
             || ()
@@ -109,6 +116,7 @@ pub fn app() -> Html {
                 on_logout={on_logout}
                 current_theme={(*theme).clone()}
                 is_authenticated={*authenticated}
+                is_pin_required={*is_pin_required}
             />
             <div class="container">
                 <link rel="stylesheet" href={theme_stylesheet_url} />
