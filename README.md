@@ -35,72 +35,72 @@ Create a `.env` file in the root directory to configure the application runtime:
 
 | Variable | Description | Default | Environment |
 | :--- | :--- | :--- | :--- |
-| `PORT` | The port address the backend web server listens on | `3000` | All |
-| `BASE_URL` | Application base URL (must start with http/https) | `http://localhost:3000` | All |
+| `PORT` | The port address the backend web server listens on | `4402` | All |
+| `BASE_URL` | Application base URL (must start with http/https) | `http://localhost:4402` | All |
 | `RUSTPAD_PIN` | Optional 4-10 digit authentication PIN (digit-only) | None | All |
 | `SITE_TITLE` | The title shown in the browser and PWA manifest | `RustPad` | All |
 | `MAX_ATTEMPTS` | Maximum PIN auth attempts allowed before rate lockout | `5` | Production/Dev |
 | `LOCKOUT_TIME` | Bruteforce lockout duration in minutes | `15` | Production/Dev |
 | `TRUST_PROXY` | Set true if deploying behind reverse proxy (Nginx, Cloudflare) | `false` | Production |
 | `TRUSTED_PROXY_IPS` | Comma-separated list of trusted proxy CIDRs/IPs | None | Production |
-
+ 
 ---
-
+ 
 ## Quick Start
-
+ 
 Get RustPad up and running locally in under 2 minutes:
-
+ 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/UberMetroid/RustPad.git
 cd RustPad
-
+ 
 # 2. Add WASM target and install Trunk
 rustup target add wasm32-unknown-unknown
 cargo install --locked trunk
-
+ 
 # 3. Build static frontend assets
 cd frontend && trunk build --release && cd ..
-
+ 
 # 4. Compile and start the backend server
 cargo run --release
 ```
-
-Open your browser to `http://localhost:3000` and start editing!
-
+ 
+Open your browser to `http://localhost:4402` and start editing!
+ 
 ---
-
+ 
 ## Docker & Docker Compose Configurations
-
+ 
 ### Standalone Docker Run
 To deploy the precompiled container image in one command:
 ```bash
 docker run -d \
-  -p 3000:3000 \
+  -p 4402:4402 \
   -v ./data:/app/data \
   -e SITE_TITLE="My Notepad" \
   -e RUSTPAD_PIN="1234" \
   ghcr.io/ubermetroid/rustpad:latest
 ```
-
+ 
 ### Docker Compose
 Create a `docker-compose.yml` file for persistent deployment:
 ```yaml
 version: '3.8'
-
+ 
 services:
   rustpad:
     image: ghcr.io/ubermetroid/rustpad:latest
     container_name: rustpad
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "4402:4402"
     volumes:
       - ./data:/app/data
     environment:
       SITE_TITLE: "CompanyPad"
       RUSTPAD_PIN: "5678"
-      BASE_URL: "http://localhost:3000"
+      BASE_URL: "http://localhost:4402"
       TRUST_PROXY: "false"
 ```
 Run `docker compose up -d` to launch the services.
