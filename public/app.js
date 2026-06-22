@@ -11,7 +11,7 @@ import { marked } from '/js/marked/marked.esm.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const DEBUG = false;
-    const THEME_KEY = 'dumbpad_theme';
+    const THEME_KEY = 'rustpad_theme';
     let appSettings = {};
     const editorContainer = document.getElementById('editor-container');
     const editor = document.getElementById('editor');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cursorManager = new CursorManager({ editor });
     cursorManager.DEBUG = DEBUG;
     const storageManager = new StorageManager();
-    let currentTheme =  storageManager.load(THEME_KEY);
+    let currentTheme =  storageManager.load(THEME_KEY) || storageManager.load('dumbpad_theme');
     const settingsManager = new SettingsManager(storageManager, applySettings);
     const confirmationManager = new ConfirmationManager();
     const searchManager = new SearchManager(fetchWithPin, selectNotepad, closeAllModals);

@@ -1,7 +1,7 @@
 export default class SettingsManager {
   constructor(storageManager, applySettings) {
     this.storageManager = storageManager;
-    this.SETTINGS_KEY = 'dumbpad_settings';
+    this.SETTINGS_KEY = 'rustpad_settings';
     this.applySettings = applySettings
     this.settingsInputAutoSaveStatusInterval = document.getElementById('autosave-status-interval-input');
     this.settingsEnableRemoteConnectionMessages = document.getElementById('settings-remote-connection-messages');
@@ -23,6 +23,13 @@ export default class SettingsManager {
   getSettings() {
     try {
       let currentSettings = this.storageManager.load(this.SETTINGS_KEY);
+      if (!currentSettings) {
+        currentSettings = this.storageManager.load('dumbpad_settings');
+        if (currentSettings) {
+          // Migrate to the new key
+          this.storageManager.save(this.SETTINGS_KEY, currentSettings);
+        }
+      }
       if (!currentSettings) currentSettings = this.defaultSettings();
       // console.log("Current Settings:", currentSettings);
       return currentSettings;

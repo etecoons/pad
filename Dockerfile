@@ -8,7 +8,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
-RUN rm -f target/release/deps/dumbpad*
+RUN rm -f target/release/deps/rustpad*
 
 # Copy actual source code and build it
 COPY src ./src
@@ -26,11 +26,11 @@ FROM alpine:latest
 WORKDIR /app
 
 # Create a non-root user matching UID 1000
-RUN addgroup -g 1000 dumbpad && \
-    adduser -u 1000 -G dumbpad -s /bin/sh -D dumbpad
+RUN addgroup -g 1000 rustpad && \
+    adduser -u 1000 -G rustpad -s /bin/sh -D rustpad
 
 # Copy compiled Rust binary
-COPY --from=rust-builder /app/target/release/dumbpad /app/dumbpad
+COPY --from=rust-builder /app/target/release/rustpad /app/rustpad
 
 # Copy node modules (frontend dependencies)
 COPY --from=node-builder /app/node_modules /app/node_modules
@@ -40,13 +40,13 @@ COPY public /app/public
 
 # Setup data and asset directories with correct ownership
 RUN mkdir -p /app/data /app/public/Assets && \
-    chown -R dumbpad:dumbpad /app
+    chown -R rustpad:rustpad /app
 
-USER dumbpad
+USER rustpad
 
 # Mount data volume
 VOLUME /app/data
 
 EXPOSE 3000
 
-CMD ["/app/dumbpad"]
+CMD ["/app/rustpad"]

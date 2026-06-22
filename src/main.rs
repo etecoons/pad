@@ -38,8 +38,11 @@ async fn main() {
         .ok()
         .and_then(|s| s.parse::<u16>().ok())
         .unwrap_or(3000);
-    let site_title = std::env::var("SITE_TITLE").unwrap_or_else(|_| "DumbPad".to_string());
-    let pin = std::env::var("DUMBPAD_PIN").ok().filter(|s| !s.is_empty());
+    let site_title = std::env::var("SITE_TITLE").unwrap_or_else(|_| "RustPad".to_string());
+    let pin = std::env::var("RUSTPAD_PIN")
+        .or_else(|_| std::env::var("DUMBPAD_PIN"))
+        .ok()
+        .filter(|s| !s.is_empty());
     
     // Validate PIN format
     let pin = pin.filter(|p| p.len() >= 4 && p.len() <= 10 && p.chars().all(|c| c.is_ascii_digit()));

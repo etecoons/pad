@@ -142,12 +142,12 @@ pub fn generate_pwa_manifest(site_title: &str, public_dir: &StdPath) -> std::io:
         "theme_color": "#000000",
         "icons": [
             {
-                "src": "dumbpad.png",
+                "src": "rustpad.png",
                 "type": "image/png",
                 "sizes": "192x192"
             },
             {
-                "src": "dumbpad.png",
+                "src": "rustpad.png",
                 "type": "image/png",
                 "sizes": "512x512"
             }

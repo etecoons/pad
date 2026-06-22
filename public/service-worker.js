@@ -1,6 +1,6 @@
 let APP_VERSION = "1.0.0"; // Default version, will be updated by server
 
-const getCacheName = (version) => `DUMBPAD_CACHE_${version}`;
+const getCacheName = (version) => `RUSTPAD_CACHE_${version}`;
 
 const getConfig = async () => {
   try {
@@ -31,15 +31,20 @@ const getAppVersion = async () => {
 
 const getCurrentCacheVersion = async () => {
   const cacheNames = await caches.keys();
-  const dumbpadCaches = cacheNames.filter(name => name.startsWith('DUMBPAD_CACHE_') || name.startsWith('DUMBPAD_PWA_CACHE'));
+  const rustpadCaches = cacheNames.filter(name => 
+    name.startsWith('RUSTPAD_CACHE_') || 
+    name.startsWith('RUSTPAD_PWA_CACHE') || 
+    name.startsWith('DUMBPAD_CACHE_') || 
+    name.startsWith('DUMBPAD_PWA_CACHE')
+  );
   
-  if (dumbpadCaches.length === 0) {
+  if (rustpadCaches.length === 0) {
     return null; // No cache exists
   }
   
-  // Extract version from cache name (e.g., "DUMBPAD_CACHE_1.0.1" -> "1.0.1")
-  const latestCache = dumbpadCaches[dumbpadCaches.length - 1];
-  return latestCache.replace('DUMBPAD_CACHE_', '');
+  // Extract version from cache name (e.g., "RUSTPAD_CACHE_1.0.1" -> "1.0.1")
+  const latestCache = rustpadCaches[rustpadCaches.length - 1];
+  return latestCache.replace('RUSTPAD_CACHE_', '').replace('DUMBPAD_CACHE_', '');
 };
 
 const installNewCache = async (version) => {
@@ -88,7 +93,13 @@ const cleanupOldCaches = async (currentVersion) => {
 
   const cacheNames = await caches.keys();
   const deletePromises = cacheNames
-    .filter(name => (name.startsWith('DUMBPAD_CACHE_') || name.startsWith('DUMBPAD_PWA_CACHE')) && name !== currentCacheName)
+    .filter(name => 
+      (name.startsWith('RUSTPAD_CACHE_') || 
+       name.startsWith('RUSTPAD_PWA_CACHE') || 
+       name.startsWith('DUMBPAD_CACHE_') || 
+       name.startsWith('DUMBPAD_PWA_CACHE')) && 
+      name !== currentCacheName
+    )
     .map(name => {
       console.log("Deleting old cache:", name);
       return caches.delete(name);

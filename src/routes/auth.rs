@@ -12,7 +12,7 @@ use tokio::fs;
 use crate::state::AppState;
 use crate::utils::{get_client_ip, secure_compare};
 
-pub const COOKIE_NAME: &str = "dumbpad_auth";
+pub const COOKIE_NAME: &str = "rustpad_auth";
 
 // Redirect URL validator helper
 pub fn is_valid_redirect_url(url: &str) -> bool {

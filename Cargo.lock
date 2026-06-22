@@ -303,31 +303,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
-name = "dumbpad"
-version = "1.0.5"
-dependencies = [
- "axum",
- "axum-extra",
- "chrono",
- "cookie",
- "dotenvy",
- "futures-util",
- "fuzzy-matcher",
- "ipnet",
- "notify",
- "percent-encoding",
- "regex",
- "serde",
- "serde_json",
- "tokio",
- "tower 0.4.13",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
 name = "encoding_rs"
 version = "0.8.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1038,6 +1013,31 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "rustpad"
+version = "1.0.5"
+dependencies = [
+ "axum",
+ "axum-extra",
+ "chrono",
+ "cookie",
+ "dotenvy",
+ "futures-util",
+ "fuzzy-matcher",
+ "ipnet",
+ "notify",
+ "percent-encoding",
+ "regex",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower 0.4.13",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
 
 [[package]]
 name = "rustversion"
