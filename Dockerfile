@@ -1,16 +1,10 @@
 # --- Stage 1: Build the Rust Backend and Frontend ---
 FROM rust:alpine AS rust-builder
-ENV CARGO_BUILD_JOBS=1
 RUN apk add --no-cache musl-dev wget gzip brotli
 
 # Install WebAssembly target and Trunk builder
 RUN rustup target add wasm32-unknown-unknown
-RUN case "$(uname -m)" in \
-      x86_64) ARCH=x86_64 ;; \
-      aarch64) ARCH=aarch64 ;; \
-      *) echo "Unsupported architecture" && exit 1 ;; \
-    esac && \
-    wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-${ARCH}-unknown-linux-musl.tar.gz" | tar -xzf- -C /usr/local/bin
+RUN wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-musl.tar.gz" | tar -xzf- -C /usr/local/bin
 
 WORKDIR /app
 
