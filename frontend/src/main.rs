@@ -5,6 +5,7 @@ mod settings;
 mod preview;
 mod search;
 mod editor;
+mod modals;
 
 use yew::prelude::*;
 use wasm_bindgen_futures::spawn_local;
@@ -16,6 +17,7 @@ use login::Login;
 use settings::SettingsModal;
 use search::SearchModal;
 use editor::Editor;
+use modals::{RenameModal, DeleteModal};
 
 #[function_component(App)]
 pub fn app() -> Html {
@@ -28,7 +30,6 @@ pub fn app() -> Html {
     let settings_open = use_state(|| false);
     let rename_open = use_state(|| false);
     let delete_open = use_state(|| false);
-    let rename_value = use_state(|| "".to_string());
     let app_version = use_state(|| "1.0.5".to_string());
 
     {
@@ -91,16 +92,14 @@ pub fn app() -> Html {
 
     let on_rename_confirm = {
         let notepad_id = (*active_notepad_id).clone();
-        let rename_val = rename_value.clone();
         let rename_open = rename_open.clone();
         let notepads = notepads.clone();
-        Callback::from(move |_| {
+        Callback::from(move |new_name: String| {
             let nid = notepad_id.clone();
-            let val = (*rename_val).clone();
             let rename_open = rename_open.clone();
             let notepads = notepads.clone();
             spawn_local(async move {
-                let _ = ApiService::rename_notepad(&nid, &val).await;
+                let _ = ApiService::rename_notepad(&nid, &new_name).await;
                 rename_open.set(false);
                 if let Ok(res) = ApiService::get_notepads().await {
                     notepads.set(res.notepads_list);
@@ -142,6 +141,12 @@ pub fn app() -> Html {
     });
 
     let current_theme = StorageService::get_theme();
+    let theme_stylesheet_url = if current_theme == "dark" {
+        "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    } else {
+        "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+    };
+
     let theme_toggle_icon = if current_theme == "dark" {
         html! { <svg id="sun-icon" class="sun" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> }
     } else {
@@ -152,6 +157,7 @@ pub fn app() -> Html {
 
     html! {
         <div class="container">
+            <link rel="stylesheet" href={theme_stylesheet_url} />
             <header>
                 <div class="header-top">
                     <div id="header-title" data-tooltip={format!("Version: {}", *app_version)}>
@@ -183,7 +189,7 @@ pub fn app() -> Html {
                         </select>
                     </div>
                     <div class="notepad-controls-wrapper">
-                        <button id="rename-notepad" class="icon-button" onclick={let r = rename_open.clone(); let rv = rename_value.clone(); let name = active_name.clone(); move |_| { r.set(true); rv.set(name.clone()) }}>
+                        <button id="rename-notepad" class="icon-button" onclick={let r = rename_open.clone(); move |_| r.set(true)}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                         </button>
                         <button id="delete-notepad" class="icon-button" onclick={let d = delete_open.clone(); move |_| d.set(true)}>
@@ -223,39 +229,18 @@ pub fn app() -> Html {
                 on_save={let s = settings.clone(); Callback::from(move |new_s| s.set(new_s))}
             />
 
-            if *rename_open {
-                <div id="rename-modal" class="modal" style="display: block;">
-                    <div class="modal-content">
-                        <h2>{"Rename Notepad"}</h2>
-                        <input 
-                            type="text" 
-                            class="modal-input" 
-                            value={(*rename_value).clone()}
-                            oninput={let r = rename_value.clone(); Callback::from(move |e: InputEvent| {
-                                let input: web_sys::HtmlInputElement = e.target_unchecked_into();
-                                r.set(input.value());
-                            })}
-                        />
-                        <div class="modal-buttons">
-                            <button onclick={let r = rename_open.clone(); move |_| r.set(false)}>{"Cancel"}</button>
-                            <button onclick={on_rename_confirm}>{"Rename"}</button>
-                        </div>
-                    </div>
-                </div>
-            }
-
-            if *delete_open {
-                <div id="delete-modal" class="modal" style="display: block;">
-                    <div class="modal-content">
-                        <h2>{"Delete Notepad"}</h2>
-                        <p class="modal-message">{"Are you sure you want to delete this notepad? This action cannot be undone."}</p>
-                        <div class="modal-buttons">
-                            <button onclick={let d = delete_open.clone(); move |_| d.set(false)}>{"Cancel"}</button>
-                            <button class="danger" onclick={on_delete_confirm}>{"Delete"}</button>
-                        </div>
-                    </div>
-                </div>
-            }
+            <RenameModal 
+                is_open={*rename_open}
+                initial_value={active_name.clone()}
+                on_close={let r = rename_open.clone(); Callback::from(move |_| r.set(false))}
+                on_confirm={on_rename_confirm}
+            />
+            
+            <DeleteModal 
+                is_open={*delete_open}
+                on_close={let d = delete_open.clone(); Callback::from(move |_| d.set(false))}
+                on_confirm={on_delete_confirm}
+            />
         </div>
     }
 }

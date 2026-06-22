@@ -36,13 +36,7 @@ COPY frontend/Assets ./frontend/Assets
 RUN cd frontend && trunk build --release
 RUN cargo build --release --bin rustpad
 
-# --- Stage 2: Fetch Frontend Node Modules ---
-FROM node:22-alpine AS node-builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-# --- Stage 3: Final Runtime Container ---
+# --- Stage 2: Final Runtime Container ---
 FROM alpine:latest
 
 WORKDIR /app
@@ -56,9 +50,6 @@ COPY --from=rust-builder /app/target/release/rustpad /app/rustpad
 
 # Copy compiled frontend assets
 COPY --from=rust-builder /app/frontend/dist /app/frontend/dist
-
-# Copy node modules (frontend dependencies)
-COPY --from=node-builder /app/node_modules /app/node_modules
 
 # Setup data and asset directories with correct ownership
 RUN mkdir -p /app/data /app/frontend/dist/Assets && \

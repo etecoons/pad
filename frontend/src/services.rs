@@ -52,6 +52,7 @@ pub struct RenameNotepadPayload {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct RenameNotepadResponse {
     pub id: String,
     pub name: String,
@@ -78,6 +79,7 @@ pub struct VerifyPinResponse {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct ConfigResponse {
     pub site_title: String,
     pub base_url: String,
@@ -86,6 +88,7 @@ pub struct ConfigResponse {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct SearchResponse {
     pub results: Vec<SearchItem>,
     pub total_pages: usize,

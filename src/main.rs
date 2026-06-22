@@ -199,26 +199,6 @@ async fn main() {
         .nest("/api", api_routes.merge(public_api_routes))
         .route("/ws", get(handle_socket))
         .route("/health", get(health_check))
-        // Serve highlight modules and marked modules dynamically mapped to node_modules/
-        .nest_service("/js/marked", ServeDir::new("node_modules/marked/lib"))
-        .nest_service(
-            "/js/marked-extended-tables",
-            ServeDir::new("node_modules/marked-extended-tables/src"),
-        )
-        .nest_service("/js/marked-alert", ServeDir::new("node_modules/marked-alert/dist"))
-        .nest_service(
-            "/js/marked-highlight",
-            ServeDir::new("node_modules/marked-highlight/src"),
-        )
-        .nest_service(
-            "/js/@highlightjs/languages",
-            ServeDir::new("node_modules/@highlightjs/cdn-assets/es/languages"),
-        )
-        .nest_service("/js/@highlightjs", ServeDir::new("node_modules/@highlightjs/cdn-assets/es"))
-        .nest_service(
-            "/css/@highlightjs",
-            ServeDir::new("node_modules/@highlightjs/cdn-assets/styles"),
-        )
         .fallback_service(ServeDir::new("frontend/dist"))
         .layer(cors)
         .with_state(state.clone());

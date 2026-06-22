@@ -48,8 +48,20 @@ pub fn parse_markdown(md: &str) -> String {
     processed
 }
 
+#[wasm_bindgen::prelude::wasm_bindgen]
+extern "C" {
+    fn eval(code: &str);
+}
+
 #[function_component(Preview)]
 pub fn preview(props: &PreviewProps) -> Html {
+    let content = props.content.clone();
+
+    use_effect_with(content, |_| {
+        eval("setTimeout(() => { if (window.hljs) hljs.highlightAll(); }, 50);");
+        || ()
+    });
+
     if !props.is_visible {
         return html! {};
     }
