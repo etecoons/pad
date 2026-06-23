@@ -2,6 +2,12 @@
 name = "rustpad-frontend"
 version = "1.2.0"
 edition = "2021"
+authors = ["UberMetroid <admin@ubermetroid.com>"]
+license = "GPL-3.0-only"
+repository = "https://github.com/UberMetroid/RustPad"
+homepage = "https://github.com/UberMetroid/RustPad"
+description = "Yew frontend application for RustPad."
+readme = "../README.md"
 
 [dependencies]
 yew = { version = "0.21", features = ["csr"] }

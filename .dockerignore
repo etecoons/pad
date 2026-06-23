@@ -1,15 +1,36 @@
-target/
-frontend/dist/
-data/
-.cursorrules
-.dockerignore
+# Version control
 .git
-.github
 .gitignore
 .gitattributes
-docs/
-Dockerfile
-docker-compose.yml
-README.md
+
+# Environment files
 .env
 .env.*
+!.env.example
+
+# Rust build outputs
+target/
+**/target/
+frontend/dist/
+frontend/target/
+dist/
+
+# Local data & uploads
+local_uploads/
+uploads/
+data/
+
+# Development configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+.cursorrules
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker files
+docker-compose*.yml
+Dockerfile*

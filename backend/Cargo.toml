@@ -2,6 +2,12 @@
 name = "rustpad"
 version = "1.2.0"
 edition = "2021"
+authors = ["UberMetroid <admin@ubermetroid.com>"]
+license = "GPL-3.0-only"
+repository = "https://github.com/UberMetroid/RustPad"
+homepage = "https://github.com/UberMetroid/RustPad"
+description = "Axum backend service for RustPad."
+readme = "../README.md"
 
 [dependencies]
 axum = { version = "0.7", features = ["ws", "macros"] }

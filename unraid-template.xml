@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+  <Name>RustPad</Name>
+  <Repository>ubermetroid/rustpad:latest</Repository>
+  <Registry>https://hub.docker.com/r/ubermetroid/rustpad</Registry>
+  
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Shell>sh</Shell>
+  <ExtraParams>--restart unless-stopped --log-opt max-size=50m</ExtraParams>
+
+  <Support>https://github.com/UberMetroid/RustPad/issues</Support>
+  <Project>https://github.com/UberMetroid/RustPad</Project>
+  <Overview>
+    RustPad is a self-hosted, lightweight collaborative notepad application built in Rust with Yew and Axum.&#xD;
+    &#xD;
+    Key Features:&#xD;
+    - Real-time synchronization of notes across users.&#xD;
+    - Syntactical highlight option for various coding languages.&#xD;
+    - Optional security access locking using a PIN.
+  </Overview>
+  <Category>Productivity:Office;Tools:Utilities;</Category>
+  <WebUI>http://[IP]:[PORT:4402]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/UberMetroid/RustPad/main/frontend/Assets/rustpad.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/UberMetroid/unraid-templates/main/templates/rustpad.xml</TemplateURL>
+  
+  <!-- Port Mapping -->
+  <Config Name="WebUI Port" Target="4402" Default="4402" Mode="tcp" Description="The main web interface port." Type="Port" Display="always" Required="true" Mask="false">4402</Config>
+  
+  <!-- Path Mapping -->
+  <Config Name="App Data" Target="/app/data" Default="/mnt/user/appdata/rustpad" Mode="rw" Description="Persistent storage for notepad database files." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/rustpad</Config>
+  
+  <!-- Variables -->
+  <Config Name="Access PIN" Target="RUSTPAD_PIN" Default="" Description="Optional access PIN to secure notepad access. Leave empty for public mode." Type="Variable" Display="always" Required="false" Mask="true"></Config>
+  
+  <Config Name="Site Title" Target="RUSTPAD_TITLE" Default="RustPad" Description="Custom website title rendered in the navigation header." Type="Variable" Display="always" Required="false" Mask="false">RustPad</Config>
+
+  <Config Name="Highlight Languages" Target="HIGHLIGHT_LANGUAGES" Default="" Description="Comma-separated list of programming language codes for syntax highlight choices (e.g. rust,javascript,python). Leave empty for all standard languages." Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
+  <Config Name="Timezone" Target="TZ" Default="UTC" Description="Timezone for the container logs." Type="Variable" Display="advanced" Required="false" Mask="false">UTC</Config>
+</Container>
