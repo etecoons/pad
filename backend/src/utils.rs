@@ -8,7 +8,10 @@ pub fn hash_pin(pin: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(pin.as_bytes());
     let result = hasher.finalize();
-    result.iter().map(|b| format!("{:02x}", b)).collect::<String>()
+    result
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<String>()
 }
 
 /// Constant-time string comparison to prevent timing attacks

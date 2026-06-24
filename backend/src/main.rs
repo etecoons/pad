@@ -22,10 +22,10 @@ mod tests;
 mod utils;
 mod ws;
 
+pub use config::AppConfig;
 use migration::migrate_all_notepads_to_name_based_files;
 use routes::*;
 use state::{AppState, AppStateInner};
-pub use config::AppConfig;
 use ws::handle_socket;
 
 #[tokio::main]
@@ -134,10 +134,7 @@ async fn main() {
                 axum::http::Method::PUT,
                 axum::http::Method::DELETE,
             ])
-            .allow_headers([
-                axum::http::header::CONTENT_TYPE,
-                axum::http::header::COOKIE,
-            ]);
+            .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::COOKIE]);
         for origin in state.config.allowed_origins.split(',') {
             if let Ok(parsed) = origin.trim().parse::<axum::http::HeaderValue>() {
                 cors = cors.allow_origin(parsed);

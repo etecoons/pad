@@ -56,12 +56,15 @@ impl AppConfig {
         let mut trusted_proxies = crate::utils::parse_trusted_proxies(&trusted_proxy_ips_raw);
 
         if trust_proxy && trusted_proxy_ips_raw.trim().is_empty() {
-            eprintln!("CRITICAL WARNING: TRUST_PROXY=true but TRUSTED_PROXY_IPS is not set or empty.");
+            eprintln!(
+                "CRITICAL WARNING: TRUST_PROXY=true but TRUSTED_PROXY_IPS is not set or empty."
+            );
             eprintln!("Trust proxy is disabled for security. Set TRUSTED_PROXY_IPS to enable proxy trust.");
             trusted_proxies.clear();
         }
 
-        let base_url = std::env::var("BASE_URL").unwrap_or_else(|_| format!("http://localhost:{}", port));
+        let base_url =
+            std::env::var("BASE_URL").unwrap_or_else(|_| format!("http://localhost:{}", port));
         let node_env = std::env::var("NODE_ENV").unwrap_or_else(|_| "development".to_string());
         let version = env!("CARGO_PKG_VERSION").to_string();
         let allowed_origins = std::env::var("ALLOWED_ORIGINS").unwrap_or_else(|_| "*".to_string());
