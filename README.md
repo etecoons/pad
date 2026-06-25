@@ -36,10 +36,14 @@ services:
       - ./data:/app/data
     environment:
       - PORT=4402
-      - BASE_URL=http://localhost:4402
-      - PAD_PIN=1234
       - SITE_TITLE=Pad
-      - TRUST_PROXY=false
+      - BASE_URL=http://localhost:4402
+      - ALLOWED_ORIGINS=*
+      - PAD_PIN=1234
+      - TZ=UTC
+      - ENABLE_TRANSLATION=false
+      - ENABLE_THEMES=true
+      - ENABLE_PRINT=true
 ```
 
 2. Run the container:
