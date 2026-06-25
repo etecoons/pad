@@ -31,8 +31,28 @@ use ws::handle_socket;
 #[tokio::main]
 async fn main() {
     // Initialize logging
+    let log_dir = std::env::var("LOG_DIR").ok();
+    let file_layer = if let Some(ref dir) = log_dir {
+        let _ = std::fs::create_dir_all(dir);
+        let log_file_path = std::path::Path::new(dir).join("error.log");
+        std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .append(true)
+            .open(log_file_path)
+            .ok()
+            .map(|file| {
+                tracing_subscriber::fmt::layer()
+                    .with_writer(std::sync::Mutex::new(file))
+                    .with_ansi(false)
+            })
+    } else {
+        None
+    };
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
+        .with(file_layer)
         .init();
 
     dotenvy::dotenv().ok();
