@@ -4,7 +4,19 @@
   <img src="https://raw.githubusercontent.com/UberMetroid/pad/main/frontend/Assets/pad.png" alt="Pad Logo" width="128" height="128">
 </p>
 
-Pad is a collaborative real-time notepad and text editor designed for minimal resource usage, zero external JS library bloat, and fast load speeds. Built with a Rust (Axum/Tokio) backend and a WebAssembly (Yew) frontend.
+Pad is a collaborative real-time notepad and text editor designed for minimal resource usage, zero external JS library bloat, and fast load speeds. Built with a high-performance Rust (Axum/Tokio) backend and a WebAssembly (Yew) frontend.
+
+---
+
+## ⚡ Key Features
+
+*   **Zebes Themes**: High-quality UI styling options based on the 6 classic Super Metroid regions (Crateria, Brinstar, Norfair, Wrecked Ship, Maridia, Tourian).
+*   **Access PIN Security**: Lock down the interface with an optional numerical PIN for absolute privacy.
+*   **Internationalization**: Built-in multilingual translation selector support.
+*   **Print Optimization**: Customized print stylesheet layout and print header action button.
+*   **Performance First**: Tiny resource footprint, zero external JS engine dependencies, and rapid page load speeds.
+*   **Real-Time Sync**: Collaborative typing synchronization across users via WebSockets.
+*   **Rich Text Editing**: Document markup format capabilities and auto-saving.
 
 ---
 
