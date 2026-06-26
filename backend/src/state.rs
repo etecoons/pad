@@ -6,10 +6,10 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::fs;
-use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::RwLock;
+use tokio::sync::mpsc::UnboundedSender;
 
-use crate::migration::{migrate_default_notepad, sanitize_filename, Notepad};
+use crate::migration::{Notepad, migrate_default_notepad, sanitize_filename};
 use crate::search::IndexedItem;
 
 #[derive(Debug, Clone)]
@@ -103,10 +103,11 @@ impl AppStateInner {
 
         while let Some(entry) = read_dir.next_entry().await? {
             let path = entry.path();
-            if path.is_file() && path.extension().is_some_and(|ext| ext == "txt") {
-                if let Some(name_str) = path.file_stem().and_then(|s| s.to_str()) {
-                    txt_files.push(name_str.to_string());
-                }
+            if path.is_file()
+                && path.extension().is_some_and(|ext| ext == "txt")
+                && let Some(name_str) = path.file_stem().and_then(|s| s.to_str())
+            {
+                txt_files.push(name_str.to_string());
             }
         }
 
@@ -162,12 +163,12 @@ impl AppStateInner {
     // Rate Limiting helper: check lockout
     pub async fn is_locked_out(&self, ip: IpAddr) -> bool {
         let map = self.login_attempts.read().await;
-        if let Some(attempts) = map.get(&ip) {
-            if attempts.count >= self.config.max_attempts {
-                let elapsed = attempts.last_attempt.elapsed();
-                if elapsed < Duration::from_secs(self.config.lockout_time_minutes * 60) {
-                    return true;
-                }
+        if let Some(attempts) = map.get(&ip)
+            && attempts.count >= self.config.max_attempts
+        {
+            let elapsed = attempts.last_attempt.elapsed();
+            if elapsed < Duration::from_secs(self.config.lockout_time_minutes * 60) {
+                return true;
             }
         }
         false
@@ -201,7 +202,7 @@ impl AppStateInner {
 
         let mut map = self.rate_limiter.write().await;
         let timestamps = map.entry(ip).or_insert_with(Vec::new);
-        
+
         timestamps.retain(|&t| now.duration_since(t) < window);
 
         if timestamps.len() >= max_requests {

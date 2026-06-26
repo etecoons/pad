@@ -100,7 +100,7 @@ pub async fn delete_notepad(
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -122,7 +122,7 @@ pub async fn delete_notepad(
                 axum::http::StatusCode::NOT_FOUND,
                 axum::Json(serde_json::json!({ "error": "Notepad not found" })),
             )
-                .into_response()
+                .into_response();
         }
     };
 

@@ -93,10 +93,10 @@ pub fn generate_session_id() -> String {
     use std::io::Read;
     let file = File::open("/dev/urandom").ok();
     let mut bytes = [0u8; 16];
-    if let Some(mut f) = file {
-        if f.read_exact(&mut bytes).is_ok() {
-            return bytes.iter().map(|b| format!("{:02x}", b)).collect();
-        }
+    if let Some(mut f) = file
+        && f.read_exact(&mut bytes).is_ok()
+    {
+        return bytes.iter().map(|b| format!("{:02x}", b)).collect();
     }
     let random_val = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -170,7 +170,11 @@ pub async fn verify_pin(
         state.reset_login_attempts(ip).await;
 
         let session_id = generate_session_id();
-        state.active_sessions.write().await.insert(session_id.clone());
+        state
+            .active_sessions
+            .write()
+            .await
+            .insert(session_id.clone());
 
         let cookie_max_age = Duration::from_secs((state.config.cookie_max_age_hours * 3600) as u64);
         let same_site = SameSite::Strict;

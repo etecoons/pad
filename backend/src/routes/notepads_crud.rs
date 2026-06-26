@@ -6,7 +6,7 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
 use std::time::Duration;
 use tokio::fs;
 
-use crate::migration::{get_notepad_file_path, sanitize_filename, Notepad};
+use crate::migration::{Notepad, get_notepad_file_path, sanitize_filename};
 use crate::state::{AppState, NotepadsJson};
 
 pub const PAGE_HISTORY_COOKIE: &str = "log_page_history";
@@ -34,7 +34,7 @@ pub async fn create_notepad(jar: CookieJar, State(state): State<AppState>) -> im
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -113,7 +113,7 @@ pub async fn rename_notepad(
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -135,7 +135,7 @@ pub async fn rename_notepad(
                 axum::http::StatusCode::NOT_FOUND,
                 axum::Json(serde_json::json!({ "error": "Notepad not found" })),
             )
-                .into_response()
+                .into_response();
         }
     };
 

@@ -125,15 +125,14 @@ impl ApiService {
             .json(&payload)?
             .send()
             .await?;
-        if response.status() == 401 || response.status() == 429 || response.status() == 400 {
-            if let Ok(err_res) = response.json::<serde_json::Value>().await {
-                if let Some(err_str) = err_res.get("error").and_then(|v| v.as_str()) {
-                    return Ok(VerifyPinResponse {
-                        success: false,
-                        error: Some(err_str.to_string()),
-                    });
-                }
-            }
+        if (response.status() == 401 || response.status() == 429 || response.status() == 400)
+            && let Ok(err_res) = response.json::<serde_json::Value>().await
+            && let Some(err_str) = err_res.get("error").and_then(|v| v.as_str())
+        {
+            return Ok(VerifyPinResponse {
+                success: false,
+                error: Some(err_str.to_string()),
+            });
         }
         response.json::<VerifyPinResponse>().await
     }

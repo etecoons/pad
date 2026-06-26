@@ -103,12 +103,11 @@ pub fn use_collab_websocket(
                         if let Ok(data) = serde_json::from_str::<serde_json::Value>(&text) {
                             let msg_type = data.get("type").and_then(|v| v.as_str());
                             let peer_id = data.get("userId").and_then(|v| v.as_str()).unwrap_or("");
-                            if msg_type == Some("user_connected")
-                                || msg_type == Some("user_disconnected")
+                            if (msg_type == Some("user_connected")
+                                || msg_type == Some("user_disconnected"))
+                                && let Some(count) = data.get("count").and_then(|v| v.as_u64())
                             {
-                                if let Some(count) = data.get("count").and_then(|v| v.as_u64()) {
-                                    dispatch_peer_count(count as u32);
-                                }
+                                dispatch_peer_count(count as u32);
                             }
                             if peer_id == uid_incoming {
                                 continue;

@@ -34,7 +34,9 @@ pub fn translate(key: &str) -> Option<&'static str> {
         "cancel" => Some("Cancelar"),
         "reset" => Some("Redefinir"),
         "delete_title" => Some("Excluir Bloco de Notas"),
-        "delete_msg" => Some("Tem certeza de que deseja excluir este bloco de notas? Esta ação não pode ser desfeita."),
+        "delete_msg" => Some(
+            "Tem certeza de que deseja excluir este bloco de notas? Esta ação não pode ser desfeita.",
+        ),
         "delete_confirm" => Some("Excluir"),
         "shortcuts_title" => Some("Atalhos de Teclado"),
         "sc_search" => Some("Buscar Blocos de Notas"),

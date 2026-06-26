@@ -19,10 +19,8 @@ pub fn login(props: &LoginProps) -> Html {
     {
         let input_ref = input_ref.clone();
         use_effect_with(*is_locked, move |locked| {
-            if !*locked {
-                if let Some(input) = input_ref.cast::<web_sys::HtmlInputElement>() {
-                    let _ = input.focus();
-                }
+            if !*locked && let Some(input) = input_ref.cast::<web_sys::HtmlInputElement>() {
+                let _ = input.focus();
             }
             || ()
         });

@@ -38,19 +38,18 @@ pub fn app() -> Html {
                     if !config.enable_themes {
                         theme.set("tourian".to_string());
                         StorageService::set_theme("tourian");
-                        if let Some(win) = web_sys::window() {
-                            if let Some(doc) = win.document() {
-                                if let Some(el) = doc.document_element() {
-                                    let _ = el.set_attribute("data-theme", "tourian");
-                                    let _ = el.set_attribute("class", "tourian");
-                                }
-                            }
+                        if let Some(win) = web_sys::window()
+                            && let Some(doc) = win.document()
+                            && let Some(el) = doc.document_element()
+                        {
+                            let _ = el.set_attribute("data-theme", "tourian");
+                            let _ = el.set_attribute("class", "tourian");
                         }
                     }
-                    if let Some(win) = web_sys::window() {
-                        if let Some(doc) = win.document() {
-                            doc.set_title(&config.site_title);
-                        }
+                    if let Some(win) = web_sys::window()
+                        && let Some(doc) = win.document()
+                    {
+                        doc.set_title(&config.site_title);
                     }
                 }
             });
@@ -153,13 +152,11 @@ pub fn app() -> Html {
                                 let loc = win.location();
                                 let search = loc.search().unwrap_or_default();
                                 let mut redirect_url = "/".to_string();
-                                if let Ok(params) = web_sys::UrlSearchParams::new_with_str(&search) {
-                                    if let Some(r) = params.get("redirect") {
-                                        if !r.is_empty() && r.starts_with('/') && !r.starts_with("//") {
+                                if let Ok(params) = web_sys::UrlSearchParams::new_with_str(&search)
+                                    && let Some(r) = params.get("redirect")
+                                        && !r.is_empty() && r.starts_with('/') && !r.starts_with("//") {
                                             redirect_url = r;
                                         }
-                                    }
-                                }
                                 if let Ok(history) = win.history() {
                                     let _ = history.replace_state_with_url(
                                         &wasm_bindgen::JsValue::NULL,

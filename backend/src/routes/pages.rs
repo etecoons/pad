@@ -61,10 +61,10 @@ pub async fn serve_login(
     Query(params): Query<HashMap<String, String>>,
 ) -> impl IntoResponse {
     if is_authenticated(&jar, &state, &headers).await {
-        if let Some(redirect) = params.get("redirect") {
-            if is_valid_redirect_url(redirect) {
-                return Redirect::temporary(redirect).into_response();
-            }
+        if let Some(redirect) = params.get("redirect")
+            && is_valid_redirect_url(redirect)
+        {
+            return Redirect::temporary(redirect).into_response();
         }
         return Redirect::temporary("/").into_response();
     }

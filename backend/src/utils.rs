@@ -109,10 +109,10 @@ pub fn get_client_ip(
     }
 
     if !trusted_proxies.is_empty() {
-        if is_trusted_proxy(socket_ip, trusted_proxies) {
-            if let Some(xff_ip) = first_ip_from_x_forwarded_for(headers) {
-                return xff_ip;
-            }
+        if is_trusted_proxy(socket_ip, trusted_proxies)
+            && let Some(xff_ip) = first_ip_from_x_forwarded_for(headers)
+        {
+            return xff_ip;
         }
         return socket_ip;
     }

@@ -61,7 +61,9 @@ impl AppConfig {
             eprintln!(
                 "CRITICAL WARNING: TRUST_PROXY=true but TRUSTED_PROXY_IPS is not set or empty."
             );
-            eprintln!("Trust proxy is disabled for security. Set TRUSTED_PROXY_IPS to enable proxy trust.");
+            eprintln!(
+                "Trust proxy is disabled for security. Set TRUSTED_PROXY_IPS to enable proxy trust."
+            );
             trusted_proxies.clear();
         }
 
@@ -75,10 +77,12 @@ impl AppConfig {
             .unwrap_or(false);
 
         let enable_themes = std::env::var("ENABLE_THEMES")
-            .map(|v| v == "true" || v == "on").unwrap_or(false);
+            .map(|v| v == "true" || v == "on")
+            .unwrap_or(false);
 
         let enable_print = std::env::var("ENABLE_PRINT")
-            .map(|v| v == "true" || v == "on").unwrap_or(false);
+            .map(|v| v == "true" || v == "on")
+            .unwrap_or(false);
 
         Self {
             site_title,

@@ -1,7 +1,6 @@
 use axum::{
-    middleware,
+    Router, middleware,
     routing::{get, post, put},
-    Router,
 };
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -47,13 +46,11 @@ async fn main() {
             let _ = std::fs::create_dir_all(dir);
             let error_file = std::fs::OpenOptions::new()
                 .create(true)
-                .write(true)
                 .append(true)
                 .open(std::path::Path::new(dir).join("error.log"))
                 .ok();
             let app_file = std::fs::OpenOptions::new()
                 .create(true)
-                .write(true)
                 .append(true)
                 .open(std::path::Path::new(dir).join("app.log"))
                 .ok();
@@ -153,11 +150,11 @@ async fn main() {
             if let Ok(event) = res {
                 let mut should_reindex = false;
                 for path in event.paths {
-                    if let Some(ext) = path.extension() {
-                        if ext == "txt" || path.file_name().is_some_and(|f| f == "notepads.json") {
-                            should_reindex = true;
-                            break;
-                        }
+                    if let Some(ext) = path.extension()
+                        && (ext == "txt" || path.file_name().is_some_and(|f| f == "notepads.json"))
+                    {
+                        should_reindex = true;
+                        break;
                     }
                 }
                 if should_reindex {
@@ -210,9 +207,12 @@ async fn main() {
         .route("/config", get(get_config))
         .route("/logout", post(logout));
 
-    let merged_api = api_routes.merge(public_api_routes).layer(
-        middleware::from_fn_with_state(state.clone(), crate::routes::rate_limit_middleware),
-    );
+    let merged_api = api_routes
+        .merge(public_api_routes)
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            crate::routes::rate_limit_middleware,
+        ));
 
     let app = Router::new()
         .route("/", get(serve_root))

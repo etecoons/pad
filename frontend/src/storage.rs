@@ -14,7 +14,8 @@ impl StorageService {
     fn get_cookie_str() -> Option<String> {
         let window = web_sys::window()?;
         let document = window.document()?;
-        let val = js_sys::Reflect::get(&document, &wasm_bindgen::JsValue::from_str("cookie")).ok()?;
+        let val =
+            js_sys::Reflect::get(&document, &wasm_bindgen::JsValue::from_str("cookie")).ok()?;
         val.as_string()
     }
 
@@ -24,26 +25,26 @@ impl StorageService {
         let _ = js_sys::Reflect::set(
             &document,
             &wasm_bindgen::JsValue::from_str("cookie"),
-            &wasm_bindgen::JsValue::from_str(cookie_value)
+            &wasm_bindgen::JsValue::from_str(cookie_value),
         );
         Some(())
     }
 
     pub fn get_item(key: &str, default: &str) -> String {
-        if key == "theme" {
-            if let Some(cookie_str) = Self::get_cookie_str() {
-                for cookie in cookie_str.split(';') {
-                    let parts: Vec<&str> = cookie.split('=').map(|s| s.trim()).collect();
-                    if parts.len() >= 2 && parts[0] == "super_metroid_theme" {
-                        let val = parts[1].to_string();
-                        let clean = if val.starts_with('"') && val.ends_with('"') && val.len() >= 2 {
-                            val[1..val.len() - 1].to_string()
-                        } else {
-                            val
-                        };
-                        let _ = Self::local_storage().map(|s| s.set_item(key, &clean));
-                        return clean;
-                    }
+        if key == "theme"
+            && let Some(cookie_str) = Self::get_cookie_str()
+        {
+            for cookie in cookie_str.split(';') {
+                let parts: Vec<&str> = cookie.split('=').map(|s| s.trim()).collect();
+                if parts.len() >= 2 && parts[0] == "super_metroid_theme" {
+                    let val = parts[1].to_string();
+                    let clean = if val.starts_with('"') && val.ends_with('"') && val.len() >= 2 {
+                        val[1..val.len() - 1].to_string()
+                    } else {
+                        val
+                    };
+                    let _ = Self::local_storage().map(|s| s.set_item(key, &clean));
+                    return clean;
                 }
             }
         }

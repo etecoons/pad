@@ -34,7 +34,9 @@ pub fn translate(key: &str) -> Option<&'static str> {
         "cancel" => Some("Abbrechen"),
         "reset" => Some("Zurücksetzen"),
         "delete_title" => Some("Notizblock löschen"),
-        "delete_msg" => Some("Möchten Sie diesen Notizblock wirklich löschen? Dies kann nicht rückgängig gemacht werden."),
+        "delete_msg" => Some(
+            "Möchten Sie diesen Notizblock wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+        ),
         "delete_confirm" => Some("Löschen"),
         "shortcuts_title" => Some("Tastaturkürzel"),
         "sc_search" => Some("Notizblöcke suchen"),

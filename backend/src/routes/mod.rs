@@ -4,7 +4,8 @@ pub mod notepads_io;
 pub mod pages;
 
 pub use auth::{
-    get_config, logout, pin_required, require_pin, security_headers_middleware, verify_pin, rate_limit_middleware,
+    get_config, logout, pin_required, rate_limit_middleware, require_pin,
+    security_headers_middleware, verify_pin,
 };
 pub use notepads_crud::{create_notepad, get_notepads, rename_notepad};
 pub use notepads_io::{delete_notepad, get_notes, save_notes};
