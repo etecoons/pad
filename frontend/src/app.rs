@@ -1,210 +1,49 @@
-use crate::editor::Editor;
-use crate::header::Header;
-use crate::login::Login;
-use crate::services::{ApiService, StorageService};
-use shared_assets::i18n::Language;
-use wasm_bindgen_futures::spawn_local;
-use web_sys::window;
+pub mod update;
+pub mod view;
+
+use crate::services::ConfigResponse;
 use yew::prelude::*;
 
-#[function_component(App)]
-pub fn app() -> Html {
-    let authenticated = use_state(|| false);
-    let app_version = use_state(|| "2.0.0".to_string());
-    let site_title = use_state(|| "Pad".to_string());
-    let theme = use_state(StorageService::get_theme);
-    let locale_state = use_state(crate::i18n::get_saved_locale);
-    let active_notification = use_state(|| None::<(String, String)>);
-    let is_pin_required = use_state(|| true);
-    let enable_translation = use_state(|| false);
-    let enable_themes = use_state(|| true);
-    let enable_print = use_state(|| false);
-    let show_version = use_state(|| true);
-    let show_github = use_state(|| true);
+pub enum Msg {
+    LoadConfig(ConfigResponse),
+    LoadPinRequired(bool),
+    SetAuthenticated(bool),
+    SwitchLanguage(String),
+    ToggleTheme,
+    Logout,
+    SetStatus(Option<(String, String)>),
+    SetContentEmpty(bool),
+}
 
-    {
-        let version = app_version.clone();
-        let site_title = site_title.clone();
-        let pin_req = is_pin_required.clone();
-        let enable_trans = enable_translation.clone();
-        let enable_themes = enable_themes.clone();
-        let enable_print = enable_print.clone();
-        let theme = theme.clone();
-        let show_ver = show_version.clone();
-        let show_gh = show_github.clone();
-        use_effect_with((), move |_| {
-            spawn_local(async move {
-                if let Ok(config) = ApiService::get_config().await {
-                    version.set(config.version);
-                    site_title.set(config.site_title.clone());
-                    enable_trans.set(config.enable_translation);
-                    enable_themes.set(config.enable_themes);
-                    enable_print.set(config.enable_print);
-                    show_ver.set(config.show_version);
-                    show_gh.set(config.show_github);
-                    if !config.enable_themes {
-                        theme.set("tourian".to_string());
-                        StorageService::set_theme("tourian");
-                        if let Some(win) = web_sys::window()
-                            && let Some(doc) = win.document()
-                            && let Some(el) = doc.document_element()
-                        {
-                            let _ = el.set_attribute("data-theme", "tourian");
-                            let _ = el.set_attribute("class", "tourian");
-                        }
-                    }
-                    if let Some(win) = web_sys::window()
-                        && let Some(doc) = win.document()
-                    {
-                        doc.set_title(&config.site_title);
-                    }
-                }
-            });
-            spawn_local(async move {
-                if let Ok(res) = ApiService::check_pin_required().await {
-                    pin_req.set(res.required);
-                }
-            });
-            || ()
-        });
+pub struct App {
+    pub authenticated: bool,
+    pub app_version: String,
+    pub site_title: String,
+    pub theme: String,
+    pub locale_state: String,
+    pub active_notification: Option<(String, String)>,
+    pub is_pin_required: bool,
+    pub enable_translation: bool,
+    pub enable_themes: bool,
+    pub enable_print: bool,
+    pub show_version: bool,
+    pub show_github: bool,
+    pub is_content_empty: bool,
+}
+
+impl Component for App {
+    type Message = Msg;
+    type Properties = ();
+
+    fn create(ctx: &Context<Self>) -> Self {
+        Self::create_app(ctx)
     }
 
-    {
-        let authenticated = authenticated.clone();
-
-        use_effect_with(*authenticated, move |&auth| {
-            if auth {
-                spawn_local(async move {
-                    // Fetch default notes to make sure default notepad is initialized
-                    let _ = ApiService::get_notes("default").await;
-                });
-            }
-            || ()
-        });
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        self.update_app(ctx, msg)
     }
 
-    let locale_on_change = {
-        let ls = locale_state.clone();
-        Callback::from(move |new_lang: String| {
-            crate::i18n::set_saved_locale(&new_lang);
-            ls.set(new_lang);
-        })
-    };
-    let locale_context = crate::i18n::LocaleContext {
-        current: (*locale_state).clone(),
-        on_change: locale_on_change,
-    };
-
-    let toggle_theme = {
-        let theme = theme.clone();
-        Callback::from(move |_| {
-            let next = match theme.as_str() {
-                "crateria" => "brinstar",
-                "brinstar" => "norfair",
-                "norfair" => "wrecked_ship",
-                "wrecked_ship" => "maridia",
-                "maridia" => "tourian",
-                _ => "crateria",
-            };
-            StorageService::set_theme(next);
-            if let Some(html) = window()
-                .and_then(|w| w.document())
-                .and_then(|d| d.document_element())
-            {
-                let _ = html.set_attribute("data-theme", next);
-                let _ = html.set_attribute("class", next);
-            }
-            theme.set(next.to_string());
-        })
-    };
-
-    let on_logout = {
-        let auth = authenticated.clone();
-        Callback::from(move |_| {
-            let auth = auth.clone();
-            spawn_local(async move {
-                if ApiService::logout().await.is_ok() {
-                    auth.set(false);
-                }
-            });
-        })
-    };
-
-    let is_content_empty = use_state(|| true);
-    let trans_val = *enable_translation;
-    let version_url = format!("https://github.com/UberMetroid/pad/releases/tag/v{}", *app_version);
-
-    html! {
-        <ContextProvider<crate::i18n::LocaleContext> context={locale_context}>
-            <Header
-                site_title={(*site_title).clone()}
-                theme={(*theme).clone()}
-                language={Language::from_code(&*locale_state)}
-                toggle_theme={toggle_theme}
-                on_language_change={
-                    let ls = locale_state.clone();
-                    Callback::from(move |lang: Language| {
-                        let new_lang = lang.code().to_string();
-                        crate::i18n::set_saved_locale(&new_lang);
-                        ls.set(new_lang);
-                    })
-                }
-                is_authenticated={*authenticated}
-                pin_required={*is_pin_required}
-                on_logout={on_logout}
-                disable_print={*is_content_empty}
-                enable_translation={trans_val}
-                enable_themes={*enable_themes}
-                enable_print={*enable_print}
-            />
-            <div class="container">
-                {if !*authenticated {
-                    html! { <Login on_login_success={
-                        let auth = authenticated.clone();
-                        Callback::from(move |_| {
-                            auth.set(true);
-                            if let Some(win) = web_sys::window() {
-                                let loc = win.location();
-                                let search = loc.search().unwrap_or_default();
-                                let mut redirect_url = "/".to_string();
-                                if let Ok(params) = web_sys::UrlSearchParams::new_with_str(&search)
-                                    && let Some(r) = params.get("redirect")
-                                        && !r.is_empty() && r.starts_with('/') && !r.starts_with("//") {
-                                            redirect_url = r;
-                                        }
-                                if let Ok(history) = win.history() {
-                                    let _ = history.replace_state_with_url(
-                                        &wasm_bindgen::JsValue::NULL,
-                                        "",
-                                        Some(&redirect_url),
-                                    );
-                                }
-                            }
-                        })
-                    } /> }
-                } else {
-                    html! {
-                        <main>
-                            <Editor
-                                notepad_id={"default".to_string()}
-                                save_interval={3000}
-                                disable_print_expand={false}
-                                on_status={let active_notif = active_notification.clone(); Callback::from(move |status| active_notif.set(status))}
-                                on_content_empty={let is_empty = is_content_empty.clone(); Callback::from(move |val| is_empty.set(val))}
-                            />
-                        </main>
-                    }
-                }}
-            </div>
-            <crate::footer::Footer show_version={*show_version} version={(*app_version).clone()} show_github={*show_github} {version_url}>
-                {
-                    if let Some((msg, cls)) = &*active_notification {
-                        html! { <div class={format!("footer-status-text {}", cls)}>{ msg }</div> }
-                    } else {
-                        html! { <div class="footer-status-text success">{"Ready"}</div> }
-                    }
-                }
-            </crate::footer::Footer>
-        </ContextProvider<crate::i18n::LocaleContext>>
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        self.view_app(ctx)
     }
 }
