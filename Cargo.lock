@@ -363,6 +363,7 @@ dependencies = [
  "percent-encoding",
  "serde",
  "serde_json",
+ "shared-assets",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -1410,6 +1411,11 @@ dependencies = [
 [[package]]
 name = "shared-assets"
 version = "2.1.1"
+dependencies = [
+ "serde",
+ "web-sys",
+ "yew",
+]
 
 [[package]]
 name = "signal-hook-registry"

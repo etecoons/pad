@@ -2,6 +2,7 @@ use crate::editor::Editor;
 use crate::header::Header;
 use crate::login::Login;
 use crate::services::{ApiService, StorageService};
+use shared_assets::i18n::Language;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
 use yew::prelude::*;
@@ -124,19 +125,26 @@ pub fn app() -> Html {
     };
 
     let is_content_empty = use_state(|| true);
-    let ver_val = (*app_version).clone();
     let trans_val = *enable_translation;
 
     html! {
         <ContextProvider<crate::i18n::LocaleContext> context={locale_context}>
             <Header
                 site_title={(*site_title).clone()}
-                app_version={ver_val}
+                theme={(*theme).clone()}
+                language={Language::from_code(&*locale_state)}
                 toggle_theme={toggle_theme}
-                on_logout={on_logout}
-                current_theme={(*theme).clone()}
+                on_language_change={
+                    let ls = locale_state.clone();
+                    Callback::from(move |lang: Language| {
+                        let new_lang = lang.code().to_string();
+                        crate::i18n::set_saved_locale(&new_lang);
+                        ls.set(new_lang);
+                    })
+                }
                 is_authenticated={*authenticated}
-                is_pin_required={*is_pin_required}
+                pin_required={*is_pin_required}
+                on_logout={on_logout}
                 disable_print={*is_content_empty}
                 enable_translation={trans_val}
                 enable_themes={*enable_themes}
