@@ -1,10 +1,14 @@
 use crate::api::ApiService;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
+use shared_frontend::i18n::strings::{lookup, StringKey};
+use shared_frontend::i18n::Language;
 
 #[derive(Properties, PartialEq)]
 pub struct LoginProps {
     pub on_login_success: Callback<()>,
+    #[prop_or_default]
+    pub on_status_change: Callback<Option<(String, String)>>,
 }
 
 #[function_component(Login)]
@@ -49,8 +53,10 @@ pub fn login(props: &LoginProps) -> Html {
         let pin_input = pin_input.clone();
         let pin_len = *pin_length;
         let on_success = props.on_login_success.clone();
+        let on_status = props.on_status_change.clone();
         let error_msg = error_msg.clone();
         let is_locked = is_locked.clone();
+        let locale = locale.clone();
 
         Callback::from(move |e: InputEvent| {
             let input: web_sys::HtmlInputElement = e.target_unchecked_into();
@@ -64,15 +70,23 @@ pub fn login(props: &LoginProps) -> Html {
 
                 if filtered.len() == pin_len {
                     let on_success = on_success.clone();
-                    let error_msg = error_msg.clone();
+                    let on_status = on_status.clone();
                     let is_locked = is_locked.clone();
-                    let val_clone = filtered.clone();
+                    let error_msg = error_msg.clone();
+                    let loc_code = locale.current.clone();
 
                     spawn_local(async move {
-                        if let Ok(res) = ApiService::verify_pin(&val_clone).await {
+                        if let Ok(res) = ApiService::verify_pin(&filtered).await {
                             if res.success {
                                 on_success.emit(());
                             } else {
+                                let status_msg = lookup(StringKey::StatusPinFailure, Language::from_code(&loc_code)).to_string();
+                                on_status.emit(Some((status_msg, "error".to_string())));
+                                let on_status_clear = on_status.clone();
+                                gloo_timers::callback::Timeout::new(3000, move || {
+                                    on_status_clear.emit(None);
+                                }).forget();
+
                                 if let Some(err) = res.error {
                                     if err.contains("Too many attempts") {
                                         is_locked.set(true);
@@ -95,6 +109,8 @@ pub fn login(props: &LoginProps) -> Html {
         let on_success = props.on_login_success.clone();
         let error_msg = error_msg.clone();
         let is_locked = is_locked.clone();
+        let on_status = props.on_status_change.clone();
+        let loc_val = locale.current.clone();
 
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
@@ -103,11 +119,20 @@ pub fn login(props: &LoginProps) -> Html {
                 let on_success = on_success.clone();
                 let error_msg = error_msg.clone();
                 let is_locked = is_locked.clone();
+                let on_status = on_status.clone();
+                let loc_code = loc_val.clone();
                 spawn_local(async move {
                     if let Ok(res) = ApiService::verify_pin(&val).await {
                         if res.success {
                             on_success.emit(());
                         } else {
+                            let status_msg = lookup(StringKey::StatusPinFailure, Language::from_code(&loc_code)).to_string();
+                            on_status.emit(Some((status_msg, "error".to_string())));
+                            let on_status_clear = on_status.clone();
+                            gloo_timers::callback::Timeout::new(3000, move || {
+                                on_status_clear.emit(None);
+                            }).forget();
+
                             if let Some(err) = res.error {
                                 if err.contains("Too many attempts") {
                                     is_locked.set(true);

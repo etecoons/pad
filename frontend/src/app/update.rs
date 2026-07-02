@@ -1,6 +1,8 @@
 use crate::api::{ApiService, StorageService};
 use crate::app::{App, Msg};
 use shared_frontend::theme::Theme;
+use shared_frontend::i18n::strings::{lookup, StringKey};
+use shared_frontend::i18n::Language;
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 
@@ -82,11 +84,26 @@ impl App {
             }
             Msg::SetAuthenticated(auth) => {
                 self.authenticated = auth;
+                let lang = Language::from_code(&self.locale_state);
                 if auth {
+                    let pin_success = lookup(StringKey::StatusPinSuccess, lang).to_string();
+                    ctx.link().send_message(Msg::SetStatus(Some((pin_success, "success".to_string()))));
+                    let link = ctx.link().clone();
+                    gloo_timers::callback::Timeout::new(3000, move || {
+                        link.send_message(Msg::SetStatus(None));
+                    }).forget();
+
                     spawn_local(async move {
                         // Fetch default notes to make sure default notepad is initialized
                         let _ = ApiService::get_notes("default").await;
                     });
+                } else {
+                    let logout_msg = lookup(StringKey::StatusLogout, lang).to_string();
+                    ctx.link().send_message(Msg::SetStatus(Some((logout_msg, "success".to_string()))));
+                    let link = ctx.link().clone();
+                    gloo_timers::callback::Timeout::new(3000, move || {
+                        link.send_message(Msg::SetStatus(None));
+                    }).forget();
                 }
                 true
             }
@@ -114,6 +131,13 @@ impl App {
                     let _ = html.set_attribute("class", next.name());
                 }
                 self.theme = next.name().to_string();
+                let lang = Language::from_code(&self.locale_state);
+                let theme_msg = lookup(StringKey::StatusThemeChanged, lang).to_string();
+                ctx.link().send_message(Msg::SetStatus(Some((theme_msg, "success".to_string()))));
+                let link = ctx.link().clone();
+                gloo_timers::callback::Timeout::new(3000, move || {
+                    link.send_message(Msg::SetStatus(None));
+                }).forget();
                 true
             }
 
@@ -133,6 +157,39 @@ impl App {
             Msg::SetContentEmpty(is_empty) => {
                 self.is_content_empty = is_empty;
                 true
+            }
+            Msg::OnlineStatusChanged(online) => {
+                let lang = Language::from_code(&self.locale_state);
+                let (msg_key, cls) = if online {
+                    (StringKey::StatusOnline, "success")
+                } else {
+                    (StringKey::StatusOffline, "error")
+                };
+                let status_msg = lookup(msg_key, lang).to_string();
+                ctx.link().send_message(Msg::SetStatus(Some((status_msg, cls.to_string()))));
+                let link = ctx.link().clone();
+                gloo_timers::callback::Timeout::new(3000, move || {
+                    link.send_message(Msg::SetStatus(None));
+                }).forget();
+                true
+            }
+            Msg::Print => {
+                if let Some(window) = web_sys::window() {
+                    let print_res = window.print();
+                    let lang = Language::from_code(&self.locale_state);
+                    let (msg_key, cls) = if print_res.is_ok() {
+                        (StringKey::StatusPrintSuccess, "success")
+                    } else {
+                        (StringKey::StatusPrintFailure, "error")
+                    };
+                    let status_msg = lookup(msg_key, lang).to_string();
+                    ctx.link().send_message(Msg::SetStatus(Some((status_msg, cls.to_string()))));
+                    let link = ctx.link().clone();
+                    gloo_timers::callback::Timeout::new(3000, move || {
+                        link.send_message(Msg::SetStatus(None));
+                    }).forget();
+                }
+                false
             }
         }
     }

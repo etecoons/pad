@@ -40,12 +40,8 @@ impl App {
                     is_authenticated={self.authenticated}
                     pin_required={self.is_pin_required}
                     on_logout={on_logout}
-                    on_print={Some(Callback::from(|_| {
-                        if let Some(w) = web_sys::window() {
-                            let _ = w.print();
-                        }
-                    }))}
-                    print_disabled={self.is_content_empty}
+                    on_print={Some(ctx.link().callback(|_| Msg::Print))}
+                    print_disabled={self.is_content_empty || (self.is_pin_required && !self.authenticated)}
                     enable_translation={self.enable_translation}
                     enable_themes={self.enable_themes}
                     enable_print={self.enable_print}
@@ -75,6 +71,10 @@ impl App {
                                     }
                                 }
                             })
+                        }
+                        on_status_change={
+                            let link = ctx.link().clone();
+                            Callback::from(move |status| link.send_message(Msg::SetStatus(status)))
                         } /> }
                     } else {
                         html! {
