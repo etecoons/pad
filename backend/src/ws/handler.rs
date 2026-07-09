@@ -3,22 +3,32 @@ use axum::{
         ConnectInfo, State,
         ws::{Message, WebSocket, WebSocketUpgrade},
     },
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
+use axum_extra::extract::cookie::CookieJar;
 use futures_util::{sink::SinkExt, stream::StreamExt};
 use std::net::SocketAddr;
 use tokio::sync::mpsc;
 
 use super::origin::is_origin_allowed;
+use crate::routes::auth::is_authenticated;
 use crate::state::AppState;
 
 pub async fn handle_socket(
     ws: WebSocketUpgrade,
     ConnectInfo(_addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
+    jar: CookieJar,
     headers: HeaderMap,
 ) -> impl IntoResponse {
+    // REST routes gate on PIN/session; the collab socket must do the same or
+    // an unauthenticated client can inject OT ops into an otherwise locked pad.
+    if !is_authenticated(&jar, &state, &headers).await {
+        tracing::warn!(target: "ws", "Blocked unauthenticated WebSocket upgrade");
+        return (StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
+    }
+
     let origin = headers.get("origin").and_then(|h| h.to_str().ok());
 
     let allowed = is_origin_allowed(
@@ -35,7 +45,7 @@ pub async fn handle_socket(
             state.config.server.base_url,
             state.config.node_env,
         );
-        return (axum::http::StatusCode::FORBIDDEN, "Forbidden").into_response();
+        return (StatusCode::FORBIDDEN, "Forbidden").into_response();
     }
 
     ws.on_upgrade(move |socket| ws_handler(socket, state))
@@ -65,27 +75,33 @@ async fn ws_handler(socket: WebSocket, state: AppState) {
             let client_uid = data.get("userId").and_then(|v| v.as_str());
             let notepad_id = data.get("notepadId").and_then(|v| v.as_str());
 
-            // Store user connection details on first contact
+            // Store user connection details on first contact.
+            // Never overwrite an existing client channel for the same userId —
+            // that would let a late joiner hijack another peer's send path.
             if let Some(uid) = client_uid
                 && user_id.is_none()
             {
-                user_id = Some(uid.to_string());
-                state
-                    .clients
-                    .write()
-                    .await
-                    .insert(uid.to_string(), tx.clone());
-                println!("User connected via WebSocket: {}", uid);
+                let assigned = {
+                    let mut clients = state.clients.write().await;
+                    let mut assigned = uid.to_string();
+                    if clients.contains_key(&assigned) {
+                        assigned = format!(
+                            "{}-{}",
+                            uid,
+                            &uuid_v4_lite()
+                        );
+                    }
+                    clients.insert(assigned.clone(), tx.clone());
+                    assigned
+                };
+                user_id = Some(assigned.clone());
+                tracing::info!(target: "ws", "User connected via WebSocket: {assigned}");
 
                 let clients_map = state.clients.read().await;
                 let count = clients_map.len();
-                println!(
-                    "Broadcasting user_connected for: {}, total count: {}",
-                    uid, count
-                );
                 let connect_msg = serde_json::json!({
                     "type": "user_connected",
-                    "userId": uid,
+                    "userId": assigned,
                     "notepadId": notepad_id,
                     "count": count
                 });
@@ -192,23 +208,15 @@ async fn ws_handler(socket: WebSocket, state: AppState) {
                     "notepadId": nid
                 });
                 let _ = tx.send(Message::Text(sync_response.to_string().into()));
-            } else {
-                // Fallback to broadcasting other messages directly
-                let clients_map = state.clients.read().await;
-                let msg = Message::Text(text.clone());
-                for (cid, client_tx) in clients_map.iter() {
-                    if Some(cid) != user_id.as_ref() {
-                        let _ = client_tx.send(msg.clone());
-                    }
-                }
             }
+            // Unknown message types are ignored (no open-ended broadcast).
         }
     }
 
     // Cleanup user mappings upon disconnect
     if let Some(ref uid) = user_id {
         state.clients.write().await.remove(uid);
-        println!("User disconnected via WebSocket: {}", uid);
+        tracing::info!(target: "ws", "User disconnected via WebSocket: {uid}");
 
         let clients_map = state.clients.read().await;
         let count = clients_map.len();
@@ -225,4 +233,16 @@ async fn ws_handler(socket: WebSocket, state: AppState) {
     }
 
     write_task.abort();
+}
+
+/// Lightweight random id for disambiguating colliding client userIds.
+/// Avoids pulling a full UUID crate just for channel map keys.
+fn uuid_v4_lite() -> String {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let mix = nanos.wrapping_mul(0x9E37_79B9_7F4A_7C15);
+    format!("{mix:016x}")
 }

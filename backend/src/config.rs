@@ -33,7 +33,10 @@ impl AppConfig {
             .and_then(|s| s.parse::<i64>().ok())
             .unwrap_or(365);
 
-        let node_env = std::env::var("NODE_ENV").unwrap_or_else(|_| "development".to_string());
+        // Default to production so WebSocket origin checks stay fail-closed
+        // in containers and casual deploys. Local developers can set
+        // NODE_ENV=development explicitly for the open-origin convenience.
+        let node_env = std::env::var("NODE_ENV").unwrap_or_else(|_| "production".to_string());
 
         Self {
             server,

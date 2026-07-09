@@ -13,6 +13,8 @@ services:
       PAD_PIN: ${PAD_PIN:-}
       BASE_URL: ${PAD_BASE_URL:-http://localhost:4402}
       ALLOWED_ORIGINS: ${PAD_ALLOWED_ORIGINS:-*}
+      # production keeps WebSocket origin checks fail-closed; set development only for local work
+      NODE_ENV: ${NODE_ENV:-production}
       TZ: ${TZ:-UTC}
       ENABLE_TRANSLATION: ${ENABLE_TRANSLATION:-false}
       ENABLE_THEMES: ${ENABLE_THEMES:-true}

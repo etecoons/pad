@@ -14,7 +14,8 @@ fn test_fuzzy_match_subsequence() {
 
 #[test]
 fn test_origin_allowed_in_development() {
-    // Development is the documented convenience: any origin works.
+    // Development is an explicit opt-in (NODE_ENV=development): any origin works.
+    // The process default is production so containers stay fail-closed.
     assert!(ws::is_origin_allowed(
         Some("https://evil.example"),
         "http://localhost:4402",
