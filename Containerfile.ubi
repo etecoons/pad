@@ -64,7 +64,7 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 LABEL org.opencontainers.image.title="pad" \
       org.opencontainers.image.description="pad (UBI9 minimal pilot)" \
-      org.opencontainers.image.source="https://github.com/UberMetroid/pad" \
+      org.opencontainers.image.source="https://github.com/etecoons/pad" \
       org.opencontainers.image.base.name="registry.access.redhat.com/ubi9/ubi-minimal"
 
 # ca-certificates for HTTPS outbound; wget for HEALTHCHECK.

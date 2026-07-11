@@ -1,4 +1,4 @@
-# Pad — Real-Time Collaborative Notepad <img src="https://raw.githubusercontent.com/UberMetroid/unraid-templates/main/icons/pad.png" width="48" height="48" alt="pad logo" align="right">
+# Pad — Real-Time Collaborative Notepad <img src="https://raw.githubusercontent.com/etecoons/unraid-apps/main/icons/pad.png" width="48" height="48" alt="pad logo" align="right">
 
 Pad is a collaborative real-time notepad and text editor designed for minimal resource usage, zero external JS library bloat, and fast load speeds. Built with a high-performance Rust (Axum/Tokio) backend and a WebAssembly (Yew) frontend.
 
