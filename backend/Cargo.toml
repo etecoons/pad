@@ -37,4 +37,4 @@ sha2 = "0.11"
 # Direct dependency on `constant_time_eq` for PIN comparison. The same crate
 # is pulled in transitively by `shared-backend`, but declaring it here means a
 # future refactor of shared-backend won't silently break our use of it.
-constant_time_eq = "0.3"
+constant_time_eq = "0.5"
