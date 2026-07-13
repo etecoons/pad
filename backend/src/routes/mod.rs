@@ -114,7 +114,7 @@ fn get_files(dir: &StdPath, base_path: &str, files: &mut Vec<String>) -> std::io
             let entry = entry?;
             let path = entry.path();
             let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-            if file_name == ".DS_Store" || file_name == "Assets" {
+            if file_name == ".DS_Store" || file_name == "assets" {
                 continue;
             }
             let sub_path = if base_path.is_empty() || base_path == "/" {
@@ -133,7 +133,7 @@ fn get_files(dir: &StdPath, base_path: &str, files: &mut Vec<String>) -> std::io
 }
 
 pub fn generate_pwa_manifest(site_title: &str, public_dir: &StdPath) -> std::io::Result<()> {
-    let assets_dir = public_dir.join("Assets");
+    let assets_dir = public_dir.join("assets");
     std::fs::create_dir_all(&assets_dir)?;
 
     let mut files = Vec::new();
