@@ -44,7 +44,10 @@ async fn main() {
     let site_title = config.server.site_title.clone();
 
     let root_path = PathBuf::from(".");
-    let data_dir = root_path.join("data");
+    let data_dir = std::env::var("PAD_DATA_DIR")
+        .or_else(|_| std::env::var("DATA_DIR"))
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| root_path.join("data"));
     let notepads_file = data_dir.join("notepads.json");
     let public_dir = root_path.join("frontend/dist");
 
