@@ -6,7 +6,7 @@
 
 # Pad
 
-[![CI](https://github.com/etecoons/pad/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/etecoons/pad/actions/workflows/build-and-deploy.yml)
+[![CI](https://github.com/etecoons/pad/actions/workflows/ci.yml/badge.svg)](https://github.com/etecoons/pad/actions/workflows/ci.yml)
 
 Collaborative real-time scratchpad built in Rust.
 
