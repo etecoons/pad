@@ -41,10 +41,6 @@ fn base_url() -> String {
     format!("http://127.0.0.1:{}", port())
 }
 
-fn ws_url() -> String {
-    format!("ws://127.0.0.1:{}/ws", port())
-}
-
 fn client() -> Client {
     Client::builder()
         .cookie_store(true)
