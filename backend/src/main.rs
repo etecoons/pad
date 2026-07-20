@@ -64,6 +64,7 @@ async fn main() {
         rate_limiter: RwLock::new(HashMap::new()),
         notepads: RwLock::new(Vec::new()),
         index_items: RwLock::new(Vec::new()),
+        notepads_lock: tokio::sync::Mutex::new(()),
     });
 
     // Run migrations and load list

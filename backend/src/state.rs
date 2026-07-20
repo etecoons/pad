@@ -42,6 +42,7 @@ pub struct AppStateInner {
     // Notepad metadata and index cache
     pub notepads: RwLock<Vec<Notepad>>,
     pub index_items: RwLock<Vec<IndexedItem>>,
+    pub notepads_lock: tokio::sync::Mutex<()>,
 }
 
 pub type AppState = Arc<AppStateInner>;

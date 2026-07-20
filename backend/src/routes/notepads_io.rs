@@ -93,54 +93,59 @@ pub async fn delete_notepad(
             .into_response();
     }
 
-    let file_content = match fs::read_to_string(&state.notepads_file).await {
-        Ok(c) => c,
-        Err(_) => {
+    let deleted_notepad = {
+        let _lock = state.notepads_lock.lock().await;
+
+        let file_content = match fs::read_to_string(&state.notepads_file).await {
+            Ok(c) => c,
+            Err(_) => {
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
+                )
+                    .into_response();
+            }
+        };
+
+        let mut data: NotepadsJson =
+            serde_json::from_str(&file_content).unwrap_or(NotepadsJson { notepads: vec![] });
+
+        let mut notepad_idx = None;
+        for (i, n) in data.notepads.iter().enumerate() {
+            if n.id == id {
+                notepad_idx = Some(i);
+                break;
+            }
+        }
+
+        let idx = match notepad_idx {
+            Some(i) => i,
+            None => {
+                return (
+                    axum::http::StatusCode::NOT_FOUND,
+                    axum::Json(serde_json::json!({ "error": "Notepad not found" })),
+                )
+                    .into_response();
+            }
+        };
+
+        let deleted_notepad = data.notepads.remove(idx);
+
+        if fs::write(
+            &state.notepads_file,
+            serde_json::to_string_pretty(&data).unwrap(),
+        )
+        .await
+        .is_err()
+        {
             return (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
+                axum::Json(serde_json::json!({ "error": "Error saving notepads list" })),
             )
                 .into_response();
         }
+        deleted_notepad
     };
-
-    let mut data: NotepadsJson =
-        serde_json::from_str(&file_content).unwrap_or(NotepadsJson { notepads: vec![] });
-
-    let mut notepad_idx = None;
-    for (i, n) in data.notepads.iter().enumerate() {
-        if n.id == id {
-            notepad_idx = Some(i);
-            break;
-        }
-    }
-
-    let idx = match notepad_idx {
-        Some(i) => i,
-        None => {
-            return (
-                axum::http::StatusCode::NOT_FOUND,
-                axum::Json(serde_json::json!({ "error": "Notepad not found" })),
-            )
-                .into_response();
-        }
-    };
-
-    let deleted_notepad = data.notepads.remove(idx);
-
-    if fs::write(
-        &state.notepads_file,
-        serde_json::to_string_pretty(&data).unwrap(),
-    )
-    .await
-    .is_err()
-    {
-        return (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            axum::Json(serde_json::json!({ "error": "Error saving notepads list" })),
-        )
-            .into_response();
-    }
 
     let file_path = get_notepad_file_path(&deleted_notepad, &state.data_dir).await;
 

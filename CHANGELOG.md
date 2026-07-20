@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.18] - 2026-07-19
+
+### Fixed
+- **Collision & Race Protection**:
+  1. Replaced weak millisecond-timestamp-based notepad IDs with cryptographically secure random 32-character hex tokens to prevent collisions.
+  2. Synchronized all notepad crud operations (create, rename, delete) under a thread-safe mutex lock (`notepads_lock`) to prevent concurrent updates from corrupting `notepads.json`.
+
 ## [1.0.17] - 2026-07-19
 
 ### Changed

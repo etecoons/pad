@@ -48,6 +48,7 @@ pub(crate) fn fuzzy_match_subsequence(text: &str, query: &str) -> Option<i64> {
 
 impl AppStateInner {
     pub async fn index_notepads(&self) {
+        let _lock = self.notepads_lock.lock().await;
         println!("Indexing notepads...");
         let list = self.load_notepads_list().await;
 

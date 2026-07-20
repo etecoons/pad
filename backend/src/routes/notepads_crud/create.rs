@@ -1,5 +1,6 @@
 use axum::{extract::State, response::IntoResponse};
 use axum_extra::extract::cookie::{Cookie, CookieJar, SameSite};
+use rand::RngCore;
 use std::time::Duration;
 use tokio::fs;
 
@@ -9,44 +10,49 @@ use crate::migration::{Notepad, sanitize_filename};
 use crate::state::{AppState, NotepadsJson};
 
 pub async fn create_notepad(jar: CookieJar, State(state): State<AppState>) -> impl IntoResponse {
-    let file_content = match fs::read_to_string(&state.notepads_file).await {
-        Ok(c) => c,
-        Err(_) => {
+    let (new_notepad, id, unique_name) = {
+        let _lock = state.notepads_lock.lock().await;
+
+        let file_content = match fs::read_to_string(&state.notepads_file).await {
+            Ok(c) => c,
+            Err(_) => {
+                return (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
+                )
+                    .into_response();
+            }
+        };
+
+        let mut data: NotepadsJson =
+            serde_json::from_str(&file_content).unwrap_or(NotepadsJson { notepads: vec![] });
+
+        let id = {
+            let mut buf = [0u8; 16];
+            rand::rng().fill_bytes(&mut buf);
+            buf.iter().map(|b| format!("{:02x}", b)).collect::<String>()
+        };
+        let desired_name = format!("Notepad {}", data.notepads.len() + 1);
+        let unique_name = state.generate_unique_name(&desired_name, &data.notepads);
+
+        let new_notepad = Notepad {
+            id: id.clone(),
+            name: unique_name.clone(),
+        };
+        data.notepads.push(new_notepad.clone());
+
+        if fs::write(&state.notepads_file, serde_json::to_string(&data).unwrap())
+            .await
+            .is_err()
+        {
             return (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(serde_json::json!({ "error": "Error reading notepads file" })),
+                axum::Json(serde_json::json!({ "error": "Error updating notepads list" })),
             )
                 .into_response();
         }
+        (new_notepad, id, unique_name)
     };
-
-    let mut data: NotepadsJson =
-        serde_json::from_str(&file_content).unwrap_or(NotepadsJson { notepads: vec![] });
-
-    let id = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_millis()
-        .to_string();
-    let desired_name = format!("Notepad {}", data.notepads.len() + 1);
-    let unique_name = state.generate_unique_name(&desired_name, &data.notepads);
-
-    let new_notepad = Notepad {
-        id: id.clone(),
-        name: unique_name.clone(),
-    };
-    data.notepads.push(new_notepad.clone());
-
-    if fs::write(&state.notepads_file, serde_json::to_string(&data).unwrap())
-        .await
-        .is_err()
-    {
-        return (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            axum::Json(serde_json::json!({ "error": "Error updating notepads list" })),
-        )
-            .into_response();
-    }
 
     let sanitized = match sanitize_filename(&unique_name) {
         Ok(s) => s,
