@@ -28,9 +28,18 @@ pub async fn create_notepad(jar: CookieJar, State(state): State<AppState>) -> im
             serde_json::from_str(&file_content).unwrap_or(NotepadsJson { notepads: vec![] });
 
         let id = {
-            let mut buf = [0u8; 16];
-            rand::rng().fill_bytes(&mut buf);
-            buf.iter().map(|b| format!("{:02x}", b)).collect::<String>()
+            let mut bytes = [0u8; 16];
+            rand::rng().fill_bytes(&mut bytes);
+            bytes[6] = (bytes[6] & 0x0f) | 0x40; // Set version to 4
+            bytes[8] = (bytes[8] & 0x3f) | 0x80; // Set variant to 1 (RFC 4122)
+            format!(
+                "{:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}",
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5],
+                bytes[6], bytes[7],
+                bytes[8], bytes[9],
+                bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+            )
         };
         let desired_name = format!("Notepad {}", data.notepads.len() + 1);
         let unique_name = state.generate_unique_name(&desired_name, &data.notepads);
