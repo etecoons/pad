@@ -1,22 +1,11 @@
-//! Container smoke tests for `pad`.
-//!
-//! Run against a live container:
-//!   SMOKE_PORT=<port> cargo test --test container_smoke -- --ignored --nocapture
-//!
-//! Tests use `reqwest::ClientBuilder::upgrade()` to upgrade the HTTP
-//! connection on `/ws` to a WebSocket. Requires `tokio-tungstenite` as a
-//! dev-dependency.
-
 use futures_util::{SinkExt, StreamExt};
 use reqwest::Client;
 use serde_json::Value;
 use std::time::Duration;
 use tokio::time::timeout;
 use tokio_tungstenite::tungstenite::Message;
-
 const APP_NAME: &str = "pad";
 const DEFAULT_PORT: u16 = 4402;
-
 const FAVICON_CANDIDATES: &[&str] = &["/assets/favicon.png", "/favicon.png"];
 const MANIFEST_CANDIDATES: &[&str] = &["/assets/manifest.json", "/manifest.json"];
 const CONFIG_CANDIDATES: &[&str] = &["/api/config", "/api/auth/config"];
@@ -25,22 +14,18 @@ const SERVICE_WORKER_CANDIDATES: &[&str] = &[
     "/api/service-worker.js",
     "/assets/service-worker.js",
 ];
-
 fn port() -> u16 {
     std::env::var("SMOKE_PORT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(DEFAULT_PORT)
 }
-
 fn pin() -> String {
     std::env::var("SMOKE_PIN").unwrap_or_else(|_| "1234".to_string())
 }
-
 fn base_url() -> String {
     format!("http://127.0.0.1:{}", port())
 }
-
 fn client() -> Client {
     Client::builder()
         .cookie_store(true)
@@ -48,7 +33,6 @@ fn client() -> Client {
         .build()
         .expect("reqwest client")
 }
-
 async fn wait_for_health() {
     let c = client();
     for _ in 0..30 {
@@ -61,7 +45,6 @@ async fn wait_for_health() {
     }
     panic!("container at {} never became healthy", base_url());
 }
-
 async fn try_paths(c: &Client, paths: &[&str]) -> Option<reqwest::Response> {
     for p in paths {
         if let Ok(r) = c.get(format!("{}{}", base_url(), p)).send().await {
@@ -72,9 +55,6 @@ async fn try_paths(c: &Client, paths: &[&str]) -> Option<reqwest::Response> {
     }
     None
 }
-
-// ---------- common tests ----------
-
 #[tokio::test]
 #[ignore]
 async fn health_returns_200() {
@@ -82,7 +62,6 @@ async fn health_returns_200() {
     let r = c.get(format!("{}/health", base_url())).send().await.unwrap();
     assert_eq!(r.status(), 200, "expected 200 from /health");
 }
-
 #[tokio::test]
 #[ignore]
 async fn root_serves_html() {
@@ -96,7 +75,6 @@ async fn root_serves_html() {
         .unwrap_or("");
     assert!(ct.starts_with("text/html"), "expected text/html, got {ct:?}");
 }
-
 #[tokio::test]
 #[ignore]
 async fn favicon_resolves() {
@@ -114,7 +92,6 @@ async fn favicon_resolves() {
         "expected image/* (or octet-stream), got {ct:?}"
     );
 }
-
 #[tokio::test]
 #[ignore]
 async fn manifest_parses_as_pwa() {
@@ -126,7 +103,6 @@ async fn manifest_parses_as_pwa() {
     assert!(v["name"].is_string(), "manifest.name must be a string, got {v:?}");
     assert!(v["icons"].is_array(), "manifest.icons must be an array");
 }
-
 #[tokio::test]
 #[ignore]
 async fn config_endpoint_has_site_title() {
@@ -144,7 +120,6 @@ async fn config_endpoint_has_site_title() {
         "expected siteTitle == {APP_NAME:?}, got {title:?}"
     );
 }
-
 #[tokio::test]
 #[ignore]
 async fn service_worker_or_frontend_serves() {
@@ -155,16 +130,11 @@ async fn service_worker_or_frontend_serves() {
         "no service-worker path returned 2xx: {SERVICE_WORKER_CANDIDATES:?}"
     );
 }
-
-// ---------- per-app tests: pad (WebSocket) ----------
-
 #[tokio::test]
 #[ignore]
 async fn ws_route_responds_101_to_upgrade() {
     wait_for_health().await;
     let c = client();
-    // Pad requires an authenticated session AND a same-origin Origin
-    // header on the WebSocket upgrade — login first.
     let _ = c
         .post(format!("{}/api/verify-pin", base_url()))
         .header("Origin", base_url())
@@ -190,13 +160,11 @@ async fn ws_route_responds_101_to_upgrade() {
         res.status()
     );
 }
-
 #[tokio::test]
 #[ignore]
 async fn ws_round_trip_two_frames() {
     wait_for_health().await;
     let c = client();
-    // Authenticate first; the /ws handler checks the session cookie.
     let login = c
         .post(format!("{}/api/verify-pin", base_url()))
         .header("Origin", base_url())
@@ -210,8 +178,6 @@ async fn ws_round_trip_two_frames() {
         "verify-pin failed: {}",
         login.status()
     );
-    // Extract the session cookie value (PAD_PIN=<hash>) from the verify-pin
-    // response.
     let cookie = login
         .headers()
         .get_all("set-cookie")
@@ -231,9 +197,6 @@ async fn ws_round_trip_two_frames() {
         !cookie.is_empty(),
         "verify-pin response did not set PAD_PIN cookie"
     );
-
-    // Open a raw TCP stream and let tokio_tungstenite do the full handshake,
-    // including reading the 101 response (reqwest would consume it).
     let stream = tokio::net::TcpStream::connect(("127.0.0.1", port()))
         .await
         .expect("connect to /ws host");
@@ -249,20 +212,14 @@ async fn ws_round_trip_two_frames() {
         .header("Cookie", cookie)
         .body(())
         .unwrap();
-
     let (mut ws, _response) = tokio_tungstenite::client_async(req, stream)
         .await
         .expect("client_async should complete the WebSocket handshake");
-
-    // Send a hello frame; pad may or may not respond immediately.
     ws.send(Message::Text(
         serde_json::json!({"type": "hello"}).to_string().into(),
     ))
     .await
     .expect("send hello frame");
-
-    // Wait briefly for any frame (ping/pong/welcome/etc). If pad is silent,
-    // that's fine — the connection itself is the success criterion.
     let frame = timeout(Duration::from_secs(3), ws.next()).await;
     match frame {
         Ok(Some(Ok(m))) => assert!(
@@ -273,6 +230,5 @@ async fn ws_round_trip_two_frames() {
         Ok(None) => {} // server closed — acceptable for an open/close round-trip
         Err(_) => {} // no response within 3s — connection is still open, that's the win
     }
-
     let _ = ws.close(None).await;
 }
