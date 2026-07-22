@@ -1,11 +1,5 @@
-<p align="center">
-  <a href="https://github.com/studio2201/pad">
-    <img src="assets/pad-header.jpg" alt="studio2201 banner" width="100%">
-  </a>
-</p>
-
 <h1 align="center">
-  <img src="assets/pad-icon.png" width="48" height="48" valign="middle"> Pad
+  <img src="https://raw.githubusercontent.com/studio2201/.github/master/profile/assets/pad.png" width="48" height="48" valign="middle"> Pad
 </h1>
 
 <p align="center">
@@ -97,3 +91,11 @@ CLI Command Reference:
 ### License
 
 Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <a href="https://github.com/studio2201/pad">
+    <img src="assets/pad-header.jpg" alt="studio2201 banner" width="100%">
+  </a>
+</p>
