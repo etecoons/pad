@@ -274,3 +274,68 @@ fn test_is_path_within_data_dir_security_helper() {
     let _ = fs::remove_file(&valid_file);
     let _ = fs::remove_dir(&base_dir);
 }
+
+#[tokio::test]
+async fn test_generate_unique_name_collision_handling() {
+    use std::collections::{HashMap, HashSet};
+    use tokio::sync::RwLock;
+
+    let config = AppConfig::load_from_env(4402);
+    let state: AppState = Arc::new(AppStateInner {
+        config,
+        data_dir: PathBuf::from("/tmp"),
+        notepads_file: PathBuf::from("/tmp/notepads.json"),
+        clients: RwLock::new(HashMap::new()),
+        operations_history: RwLock::new(HashMap::new()),
+        active_sessions: RwLock::new(HashSet::new()),
+        rate_limiter: RwLock::new(HashMap::new()),
+        notepads: RwLock::new(Vec::new()),
+        index_items: RwLock::new(Vec::new()),
+        notepads_lock: tokio::sync::Mutex::new(()),
+    });
+
+    let existing = vec![migration::Notepad {
+        id: "1".to_string(),
+        name: "Notes".to_string(),
+    }];
+
+    // Collision should append counter suffix
+    let name = state.generate_unique_name("Notes", &existing);
+    assert_eq!(name, "Notes-1");
+
+    // Reserved "default" name should also be suffixed
+    let default_name = state.generate_unique_name("default", &[]);
+    assert_eq!(default_name, "default-1");
+}
+
+#[tokio::test]
+async fn test_check_rate_limit_exceeds_budget_and_cleanup() {
+    use std::collections::{HashMap, HashSet};
+    use std::net::{IpAddr, Ipv4Addr};
+    use tokio::sync::RwLock;
+
+    let config = AppConfig::load_from_env(4402);
+    let state: AppState = Arc::new(AppStateInner {
+        config,
+        data_dir: PathBuf::from("/tmp"),
+        notepads_file: PathBuf::from("/tmp/notepads.json"),
+        clients: RwLock::new(HashMap::new()),
+        operations_history: RwLock::new(HashMap::new()),
+        active_sessions: RwLock::new(HashSet::new()),
+        rate_limiter: RwLock::new(HashMap::new()),
+        notepads: RwLock::new(Vec::new()),
+        index_items: RwLock::new(Vec::new()),
+        notepads_lock: tokio::sync::Mutex::new(()),
+    });
+    let test_ip = IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1));
+
+    // Fill up to 100 requests
+    for _ in 0..100 {
+        assert!(state.check_rate_limit(test_ip).await);
+    }
+    // 101st request should be rejected
+    assert!(!state.check_rate_limit(test_ip).await);
+
+    // Clean old rate limits
+    state.clean_old_rate_limits().await;
+}
