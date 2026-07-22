@@ -12,6 +12,89 @@ fn test_fuzzy_match_subsequence() {
     assert!(score_none.is_none());
 }
 
+#[tokio::test]
+async fn test_authenticated_no_pin_required() {
+    use axum::http::HeaderMap;
+    use axum_extra::extract::cookie::CookieJar;
+    use std::collections::{HashMap, HashSet};
+    use tokio::sync::RwLock;
+
+    let config = AppConfig::load_from_env(4402);
+    let state: AppState = Arc::new(AppStateInner {
+        config,
+        data_dir: PathBuf::from("/tmp"),
+        notepads_file: PathBuf::from("/tmp/notepads.json"),
+        clients: RwLock::new(HashMap::new()),
+        operations_history: RwLock::new(HashMap::new()),
+        active_sessions: RwLock::new(HashSet::new()),
+        rate_limiter: RwLock::new(HashMap::new()),
+        notepads: RwLock::new(Vec::new()),
+        index_items: RwLock::new(Vec::new()),
+        notepads_lock: tokio::sync::Mutex::new(()),
+    });
+    let jar = CookieJar::new();
+    let headers = HeaderMap::new();
+
+    assert!(routes::auth::is_authenticated(&jar, &state, &headers).await);
+}
+
+#[tokio::test]
+async fn test_authenticated_with_valid_header_pin() {
+    use axum::http::HeaderMap;
+    use axum_extra::extract::cookie::CookieJar;
+    use std::collections::{HashMap, HashSet};
+    use tokio::sync::RwLock;
+
+    let mut config = AppConfig::load_from_env(4402);
+    config.server.pin = Some("1234".to_string());
+    let state: AppState = Arc::new(AppStateInner {
+        config,
+        data_dir: PathBuf::from("/tmp"),
+        notepads_file: PathBuf::from("/tmp/notepads.json"),
+        clients: RwLock::new(HashMap::new()),
+        operations_history: RwLock::new(HashMap::new()),
+        active_sessions: RwLock::new(HashSet::new()),
+        rate_limiter: RwLock::new(HashMap::new()),
+        notepads: RwLock::new(Vec::new()),
+        index_items: RwLock::new(Vec::new()),
+        notepads_lock: tokio::sync::Mutex::new(()),
+    });
+    let jar = CookieJar::new();
+    let mut headers = HeaderMap::new();
+    headers.insert("x-pin", "1234".parse().unwrap());
+
+    assert!(routes::auth::is_authenticated(&jar, &state, &headers).await);
+
+    let mut invalid_headers = HeaderMap::new();
+    invalid_headers.insert("x-pin", "9999".parse().unwrap());
+    assert!(!routes::auth::is_authenticated(&jar, &state, &invalid_headers).await);
+}
+
+#[tokio::test]
+async fn test_rate_limiter_budget_management() {
+    use std::collections::{HashMap, HashSet};
+    use std::net::{IpAddr, Ipv4Addr};
+    use tokio::sync::RwLock;
+
+    let config = AppConfig::load_from_env(4402);
+    let state: AppState = Arc::new(AppStateInner {
+        config,
+        data_dir: PathBuf::from("/tmp"),
+        notepads_file: PathBuf::from("/tmp/notepads.json"),
+        clients: RwLock::new(HashMap::new()),
+        operations_history: RwLock::new(HashMap::new()),
+        active_sessions: RwLock::new(HashSet::new()),
+        rate_limiter: RwLock::new(HashMap::new()),
+        notepads: RwLock::new(Vec::new()),
+        index_items: RwLock::new(Vec::new()),
+        notepads_lock: tokio::sync::Mutex::new(()),
+    });
+    let test_ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+
+    // First request should pass rate limit
+    assert!(state.check_rate_limit(test_ip).await);
+}
+
 #[test]
 fn test_origin_allowed_in_development() {
     // Development is an explicit opt-in (NODE_ENV=development): any origin works.
