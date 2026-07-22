@@ -13,7 +13,7 @@
   <Category>Tools: MediaServer:Other Network:Web Storage:</Category>
   <WebUI>http://[IP]:[PORT:4402]/</WebUI>
   <TemplateURL/>
-  <Icon>https://raw.githubusercontent.com/studio2201/pad/main/assets/pad-icon.png</Icon>
+  <Icon>https://raw.githubusercontent.com/studio2201/pad/master/assets/pad-icon.png</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
