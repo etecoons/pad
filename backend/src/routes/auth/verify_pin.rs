@@ -17,16 +17,6 @@ pub struct VerifyPinPayload {
     pub pin: String,
 }
 
-pub fn generate_session_id() -> String {
-    use std::fs::File;
-    use std::io::Read;
-    let file = File::open("/dev/urandom").ok();
-    let mut bytes = [0u8; 16];
-    if let Some(mut f) = file
-        && f.read_exact(&mut bytes).is_ok()
-    {
-        return bytes.iter().map(|b| format!("{:02x}", b)).collect();
-    }
     let random_val = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
@@ -104,16 +94,14 @@ pub async fn verify_pin(
     if constant_time_eq::constant_time_eq(payload.pin.as_bytes(), expected_pin.as_bytes()) {
         attempts::reset_attempts(&ip_str);
 
-        let session_id = generate_session_id();
+        let session_id = shared_backend::session_id::generate_session_id();
         state
             .active_sessions
             .write()
             .await
             .insert(session_id.clone());
 
-        let cookie_max_age =
-            Duration::from_secs((state.config.server.cookie_max_age_hours * 3600) as u64);
-        let same_site = SameSite::Strict;
+                let same_site = SameSite::Strict;
 
         let secure = headers
             .get("x-forwarded-proto")
