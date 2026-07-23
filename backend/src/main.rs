@@ -1,5 +1,3 @@
-mod cookie_auth;
-mod session_id;
 use axum::{
     Router, middleware,
     routing::{get, post, put},
@@ -99,6 +97,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .unwrap();
 
     use notify::Watcher;
+mod cookie_auth;
+mod session_id;
+
     if let Err(e) = watcher.watch(&state.data_dir, notify::RecursiveMode::NonRecursive) {
         eprintln!("Failed to start file watcher on data directory: {}", e);
     }
