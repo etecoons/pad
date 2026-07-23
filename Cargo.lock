@@ -108,6 +108,29 @@ dependencies = [
 
 [[package]]
 name = "axum-extra"
+version = "0.10.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9963ff19f40c6102c76756ef0a46004c0d58957d87259fc9208ff8441c12ab96"
+dependencies = [
+ "axum",
+ "axum-core",
+ "bytes",
+ "cookie",
+ "futures-util",
+ "http 1.4.2",
+ "http-body",
+ "http-body-util",
+ "mime",
+ "pin-project-lite",
+ "rustversion",
+ "serde_core",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "axum-extra"
 version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be44683b41ccb9ab2d23a5230015c9c3c55be97a25e4428366de8873103f7970"
@@ -144,7 +167,7 @@ name = "backend"
 version = "1.0.27"
 dependencies = [
  "axum",
- "axum-extra",
+ "axum-extra 0.12.6",
  "constant_time_eq 0.5.0",
  "cookie",
  "dotenvy",
@@ -2025,20 +2048,23 @@ dependencies = [
 
 [[package]]
 name = "shared-backend"
-version = "3.0.34"
-source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.34#839f05138c4e95e07d57e2e307a86f8558a1b65f"
+version = "3.0.35"
+source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.35#24d4c8dcf8840274bdb3a163cc27f74a5f94d54a"
 dependencies = [
  "anyhow",
  "axum",
+ "axum-extra 0.10.3",
  "chrono",
  "constant_time_eq 0.3.1",
  "dotenvy",
  "http-body-util",
  "ipnet",
+ "rand 0.9.5",
  "rusqlite",
  "serde",
  "shared-core",
  "thiserror 2.0.18",
+ "time",
  "tokio",
  "tower-http 0.6.11",
  "tracing",
@@ -2047,8 +2073,8 @@ dependencies = [
 
 [[package]]
 name = "shared-core"
-version = "3.0.34"
-source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.34#839f05138c4e95e07d57e2e307a86f8558a1b65f"
+version = "3.0.35"
+source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.35#24d4c8dcf8840274bdb3a163cc27f74a5f94d54a"
 dependencies = [
  "constant_time_eq 0.3.1",
  "serde",
@@ -2056,8 +2082,8 @@ dependencies = [
 
 [[package]]
 name = "shared-frontend"
-version = "3.0.34"
-source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.34#839f05138c4e95e07d57e2e307a86f8558a1b65f"
+version = "3.0.35"
+source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.35#24d4c8dcf8840274bdb3a163cc27f74a5f94d54a"
 dependencies = [
  "js-sys",
  "serde",
